@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"os"
-    "strings"
-    "errors"
-    "time"
-    "fmt"
+	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/slack-go/slack"
@@ -130,8 +130,8 @@ func handleReserveDevice(command slack.SlashCommand, client *slack.Client) (inte
 
 	// Create the checkbox element
 	checkbox := slack.NewCheckboxGroupsBlockElement("answer",
-        slack.NewOptionBlockObject("splinter", &slack.TextBlockObject{Text: "Splinter", Type: slack.MarkdownType}, &slack.TextBlockObject{Text: "Port: 5568", Type: slack.MarkdownType}),
-        slack.NewOptionBlockObject("shredder", &slack.TextBlockObject{Text: "Shredder", Type: slack.MarkdownType}, &slack.TextBlockObject{Text: "Port: 5555", Type: slack.MarkdownType}),
+		slack.NewOptionBlockObject("splinter", &slack.TextBlockObject{Text: "Splinter", Type: slack.MarkdownType}, &slack.TextBlockObject{Text: "Port: 5568", Type: slack.MarkdownType}),
+		slack.NewOptionBlockObject("shredder", &slack.TextBlockObject{Text: "Shredder", Type: slack.MarkdownType}, &slack.TextBlockObject{Text: "Port: 5555", Type: slack.MarkdownType}),
 	)
 	// Create the Accessory that will be included in the Block and add the checkbox to it
 	accessory := slack.NewAccessory(checkbox)
@@ -150,7 +150,7 @@ func handleReserveDevice(command slack.SlashCommand, client *slack.Client) (inte
 		},
 	}
 
-    // TODO: what do the following properties do? Can't see this in slack
+	// TODO: what do the following properties do? Can't see this in slack
 	attachment.Text = "Rate the tutorial"
 	attachment.Color = "#4af030"
 	return attachment, nil
@@ -230,41 +230,41 @@ func main() {
 						// Replace with actual err handeling
 						log.Fatal(err)
 					}
-                // Handle Slash Commands
-                case socketmode.EventTypeSlashCommand:
-                    // Just like before, type cast to the correct event type, this time a SlashEvent
-                    command, ok := event.Data.(slack.SlashCommand)
-                    if !ok {
-                        log.Printf("Could not type cast the message to a SlashCommand: %v\n", command)
-                        continue
-                    }
-                    // handleSlashCommand will take care of the command
-                    payload, err := handleSlashCommand(command, client)
-                    if err != nil {
-                        log.Fatal(err)
-                    }
-                    // Dont forget to acknowledge the request and send the payload
-                    // The payload is the response
-                    socketClient.Ack(*event.Request, payload)
+				// Handle Slash Commands
+				case socketmode.EventTypeSlashCommand:
+					// Just like before, type cast to the correct event type, this time a SlashEvent
+					command, ok := event.Data.(slack.SlashCommand)
+					if !ok {
+						log.Printf("Could not type cast the message to a SlashCommand: %v\n", command)
+						continue
+					}
+					// handleSlashCommand will take care of the command
+					payload, err := handleSlashCommand(command, client)
+					if err != nil {
+						log.Fatal(err)
+					}
+					// Dont forget to acknowledge the request and send the payload
+					// The payload is the response
+					socketClient.Ack(*event.Request, payload)
 
-                // Handle interaction events i.e. user voted in our poll etc.
-                case socketmode.EventTypeInteractive:
-                    interaction, ok := event.Data.(slack.InteractionCallback)
-                    if !ok {
-                        log.Printf("Could not type cast the message to a Interaction callback: %v\n", interaction)
-                        continue
-                    }
+				// Handle interaction events i.e. user voted in our poll etc.
+				case socketmode.EventTypeInteractive:
+					interaction, ok := event.Data.(slack.InteractionCallback)
+					if !ok {
+						log.Printf("Could not type cast the message to a Interaction callback: %v\n", interaction)
+						continue
+					}
 
-                    err := handleInteractionEvent(interaction, client)
-                    if err != nil {
-                        log.Fatal(err)
-                    }
-                    socketClient.Ack(*event.Request)
-                }
-            }
+					err := handleInteractionEvent(interaction, client)
+					if err != nil {
+						log.Fatal(err)
+					}
+					socketClient.Ack(*event.Request)
+				}
+			}
 
-        }
-    }(ctx, client, socketClient)
+		}
+	}(ctx, client, socketClient)
 
-    socketClient.Run()
+	socketClient.Run()
 }
