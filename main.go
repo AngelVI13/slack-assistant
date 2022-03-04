@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/AngelVI13/slack-assistant/modals"
 	"log"
 	"os"
 	"strings"
@@ -14,43 +15,6 @@ import (
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
-
-func generateModalRequest() slack.ModalViewRequest {
-	// Create a ModalViewRequest with a header and two inputs
-	titleText := slack.NewTextBlockObject("plain_text", "My App", false, false)
-	closeText := slack.NewTextBlockObject("plain_text", "Close", false, false)
-	submitText := slack.NewTextBlockObject("plain_text", "Submit", false, false)
-
-	headerText := slack.NewTextBlockObject("mrkdwn", "Please enter your name", false, false)
-	headerSection := slack.NewSectionBlock(headerText, nil, nil)
-
-	firstNameText := slack.NewTextBlockObject("plain_text", "First Name", false, false)
-	firstNamePlaceholder := slack.NewTextBlockObject("plain_text", "Enter your first name", false, false)
-	firstNameElement := slack.NewPlainTextInputBlockElement(firstNamePlaceholder, "firstName")
-	// Notice that blockID is a unique identifier for a block
-	firstName := slack.NewInputBlock("First Name", firstNameText, firstNameElement)
-
-	lastNameText := slack.NewTextBlockObject("plain_text", "Last Name", false, false)
-	lastNamePlaceholder := slack.NewTextBlockObject("plain_text", "Enter your first name", false, false)
-	lastNameElement := slack.NewPlainTextInputBlockElement(lastNamePlaceholder, "lastName")
-	lastName := slack.NewInputBlock("Last Name", lastNameText, lastNameElement)
-
-	blocks := slack.Blocks{
-		BlockSet: []slack.Block{
-			headerSection,
-			firstName,
-			lastName,
-		},
-	}
-
-	var modalRequest slack.ModalViewRequest
-	modalRequest.Type = slack.ViewType("modal")
-	modalRequest.Title = titleText
-	modalRequest.Close = closeText
-	modalRequest.Submit = submitText
-	modalRequest.Blocks = blocks
-	return modalRequest
-}
 
 // handleEventMessage will take an event and handle it properly based on the type of event
 func handleEventMessage(event slackevents.EventsAPIEvent, client *slack.Client) error {
@@ -126,12 +90,12 @@ func handleSlashCommand(command slack.SlashCommand, client *slack.Client) (inter
 		return nil, handleHelloCommand(command, client)
 	case "/reserve-device":
 		// return handleReserveDevice(command, client)
-        modalRequest := generateModalRequest()
-        _, err := client.OpenView(command.TriggerID, modalRequest)
-        if err != nil {
-            fmt.Printf("Error opening view: %s", err)
-        }
-        return nil, nil
+		modalRequest := modals.GenerateModalRequest()
+		_, err := client.OpenView(command.TriggerID, modalRequest)
+		if err != nil {
+			fmt.Printf("Error opening view: %s", err)
+		}
+		return nil, nil
 	}
 
 	return nil, nil
@@ -214,14 +178,14 @@ func handleInteractionEvent(interaction slack.InteractionCallback, client *slack
 
 		}
 
-    case slack.InteractionTypeViewSubmission:
-        log.Printf("---------> %+v", interaction)
-        // NOTE: we can use title text to determine which modal was submitted
-        log.Printf("----> %+v", interaction.View.Title.Text == "My App")
-        firstName := interaction.View.State.Values["First Name"]["firstName"].Value
-        lastName := interaction.View.State.Values["Last Name"]["lastName"].Value
-        msg := fmt.Sprintf("Hello %s %s, nice to meet you!", firstName, lastName)
-        log.Println(msg)
+	case slack.InteractionTypeViewSubmission:
+		log.Printf("---------> %+v", interaction)
+		// NOTE: we can use title text to determine which modal was submitted
+		log.Printf("----> %+v", interaction.View.Title.Text == "My App")
+		firstName := interaction.View.State.Values["First Name"]["firstName"].Value
+		lastName := interaction.View.State.Values["Last Name"]["lastName"].Value
+		msg := fmt.Sprintf("Hello %s %s, nice to meet you!", firstName, lastName)
+		log.Println(msg)
 	default:
 
 	}
