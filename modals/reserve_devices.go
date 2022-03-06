@@ -6,6 +6,31 @@ import (
 
 const MReserveDeviceTitle = "Reserve Device"
 
+type DeviceInfo struct {
+    Name string
+    Reserved bool
+}
+
+func getDeviceInfo() []DeviceInfo {
+    return []DeviceInfo{
+        DeviceInfo { "splinter", false },
+        DeviceInfo { "shredder", false },
+        DeviceInfo { "donatello", true },
+    }
+}
+
+func getFreeDevices() []DeviceInfo {
+    var freeDevices []DeviceInfo
+
+    for _, device := range getDeviceInfo() {
+        if !device.Reserved {
+            freeDevices = append(freeDevices, device)
+        }
+    }
+
+    return freeDevices
+}
+
 func generateDeviceBlocks() []slack.Block {
 	firstNameText := slack.NewTextBlockObject("plain_text", "First Name", false, false)
 	firstNamePlaceholder := slack.NewTextBlockObject("plain_text", "Enter your first name", false, false)
@@ -17,6 +42,13 @@ func generateDeviceBlocks() []slack.Block {
 	lastNamePlaceholder := slack.NewTextBlockObject("plain_text", "Enter your first name", false, false)
 	lastNameElement := slack.NewPlainTextInputBlockElement(lastNamePlaceholder, "lastName")
 	lastName := slack.NewInputBlock("Last Name", lastNameText, lastNameElement)
+    /*
+    var deviceBlocks []slack.Block
+
+    for _, device := getFreeDevices() {
+        sectionBlock := 
+    }
+    */
 
 	return []slack.Block{firstName, lastName}
 }
