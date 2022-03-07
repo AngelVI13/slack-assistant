@@ -5,6 +5,8 @@ import (
 )
 
 const MReserveDeviceTitle = "Reserve Device"
+const MReserveDeviceActionId = "deviceSelected"
+const MReserveDeviceCheckboxId = "deviceCheckbox"
 
 type DeviceInfo struct {
 	Name     string
@@ -59,8 +61,8 @@ func GenerateModalRequest() slack.ModalViewRequest {
 
 	deviceOptionBlocks := generateDeviceBlocks()
 	// Turn device blocks to a poll/action element block
-	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement("deviceCheckboxGroup", deviceOptionBlocks...)
-	actionBlocks := slack.NewActionBlock("devicePoll", deviceCheckboxGroup)
+	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReserveDeviceCheckboxId, deviceOptionBlocks...)
+	actionBlocks := slack.NewActionBlock(MReserveDeviceActionId, deviceCheckboxGroup)
 
 	// Add header text and action(poll) elem to slice of modal blocks
 	allBlocks := []slack.Block{headerSection, actionBlocks}

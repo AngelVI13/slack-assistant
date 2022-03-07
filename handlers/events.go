@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"log"
@@ -91,13 +92,11 @@ func HandleInteractionEvent(interaction slack.InteractionCallback, client *slack
 		}
 
 	case slack.InteractionTypeViewSubmission:
-		log.Printf("---------> %+v", interaction)
 		// NOTE: we can use title text to determine which modal was submitted
-		log.Printf("----> %+v", interaction.View.Title.Text == "My App")
-		firstName := interaction.View.State.Values["First Name"]["firstName"].Value
-		lastName := interaction.View.State.Values["Last Name"]["lastName"].Value
-		msg := fmt.Sprintf("Hello %s %s, nice to meet you!", firstName, lastName)
-		log.Println(msg)
+		log.Printf("----> %+v", interaction.View.Title.Text == modals.MReserveDeviceTitle)
+        for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
+            log.Printf("%+v\n", selected.Value)
+        }
 	default:
 
 	}
