@@ -1,13 +1,13 @@
 package handlers
 
 import (
-	"log"
-	"fmt"
-	"strings"
-	"time"
 	"errors"
+	"fmt"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"log"
+	"strings"
+	"time"
 )
 
 // HandleEventMessage will take an event and handle it properly based on the type of event

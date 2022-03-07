@@ -1,10 +1,10 @@
 package handlers
 
 import (
-    "time"
 	"fmt"
 	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/slack-go/slack"
+	"time"
 )
 
 // HandleSlashCommand will take a slash command and route to the appropriate function
@@ -88,4 +88,3 @@ func HandleReserveDevice(command slack.SlashCommand, client *slack.Client) (inte
 	attachment.Color = "#4af030"
 	return attachment, nil
 }
-

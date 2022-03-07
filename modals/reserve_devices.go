@@ -7,43 +7,43 @@ import (
 const MReserveDeviceTitle = "Reserve Device"
 
 type DeviceInfo struct {
-    Name string
-    Reserved bool
+	Name     string
+	Reserved bool
 }
 
 func getDevicesInfo() []DeviceInfo {
-    return []DeviceInfo{
-        DeviceInfo { "splinter", false },
-        DeviceInfo { "shredder", false },
-        DeviceInfo { "donatello", true },
-    }
+	return []DeviceInfo{
+		DeviceInfo{"splinter", false},
+		DeviceInfo{"shredder", false},
+		DeviceInfo{"donatello", true},
+	}
 }
 
 // getFreeDevices Get slice of all currently free devices
 func getFreeDevices() []DeviceInfo {
-    var freeDevices []DeviceInfo
+	var freeDevices []DeviceInfo
 
-    for _, device := range getDevicesInfo() {
-        if !device.Reserved {
-            freeDevices = append(freeDevices, device)
-        }
-    }
+	for _, device := range getDevicesInfo() {
+		if !device.Reserved {
+			freeDevices = append(freeDevices, device)
+		}
+	}
 
-    return freeDevices
+	return freeDevices
 }
 
 // generateDeviceBlocks Generates option block objects to be used as poll elements in modal
 func generateDeviceBlocks() []*slack.OptionBlockObject {
-    var deviceBlocks []*slack.OptionBlockObject
+	var deviceBlocks []*slack.OptionBlockObject
 
-    for _, device := range getFreeDevices() {
-        sectionBlock := slack.NewOptionBlockObject(
-            device.Name,
-            slack.NewTextBlockObject("plain_text", device.Name, false, false),
-            nil, // TODO: maybe add description
-        )
-        deviceBlocks = append(deviceBlocks, sectionBlock)
-    }
+	for _, device := range getFreeDevices() {
+		sectionBlock := slack.NewOptionBlockObject(
+			device.Name,
+			slack.NewTextBlockObject("plain_text", device.Name, false, false),
+			nil, // TODO: maybe add description
+		)
+		deviceBlocks = append(deviceBlocks, sectionBlock)
+	}
 
 	return deviceBlocks
 }
@@ -58,12 +58,12 @@ func GenerateModalRequest() slack.ModalViewRequest {
 	headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
 	deviceOptionBlocks := generateDeviceBlocks()
-    // Turn device blocks to a poll/action element block
-    deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement("deviceCheckboxGroup", deviceOptionBlocks...)
-    actionBlocks := slack.NewActionBlock("devicePoll", deviceCheckboxGroup)
+	// Turn device blocks to a poll/action element block
+	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement("deviceCheckboxGroup", deviceOptionBlocks...)
+	actionBlocks := slack.NewActionBlock("devicePoll", deviceCheckboxGroup)
 
-    // Add header text and action(poll) elem to slice of modal blocks
-	allBlocks := []slack.Block{ headerSection, actionBlocks }
+	// Add header text and action(poll) elem to slice of modal blocks
+	allBlocks := []slack.Block{headerSection, actionBlocks}
 
 	blocks := slack.Blocks{
 		BlockSet: allBlocks,
