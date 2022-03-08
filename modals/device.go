@@ -31,6 +31,26 @@ func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
 	return freeDevices
 }
 
+// getTakenDevices Get slice of all currently taken devices
+func getTakenDevices(devicesInfo DevicesInfo) DevicesInfo {
+	var takenDevices DevicesInfo
+
+	for _, device := range devicesInfo {
+		if device.Reserved {
+			takenDevices = append(takenDevices, device)
+		}
+	}
+
+	return takenDevices
+}
+
+// getAllDevices Get a slice of all devices (copies)
+func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
+	allDevices := make(DevicesInfo, len(devicesInfo))
+	copy(allDevices, devicesInfo)
+	return allDevices
+}
+
 // generateDeviceBlocks Generates option block objects to be used as poll elements in modal
 func generateDeviceBlocks(devices DevicesInfo, filter func(DevicesInfo) DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
