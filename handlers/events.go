@@ -94,9 +94,9 @@ func HandleInteractionEvent(interaction slack.InteractionCallback, client *slack
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we can use title text to determine which modal was submitted
 		log.Printf("----> %+v", interaction.View.Title.Text == modals.MReserveDeviceTitle)
-        for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-            log.Printf("%+v\n", selected.Value)
-        }
+		for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
+			log.Printf("%+v\n", selected.Value)
+		}
 	default:
 
 	}

@@ -16,7 +16,7 @@ func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (inter
 		return nil, HandleHelloCommand(command, client)
 	case "/reserve-device":
 		// return handleReserveDevice(command, client)
-		modalRequest := modals.GenerateModalRequest()
+		modalRequest := modals.GenerateReserveDeviceModalRequest(modals.Devices)
 		_, err := client.OpenView(command.TriggerID, modalRequest)
 		if err != nil {
 			fmt.Printf("Error opening view: %s", err)

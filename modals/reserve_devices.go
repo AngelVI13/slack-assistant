@@ -13,19 +13,20 @@ type DeviceInfo struct {
 	Reserved bool
 }
 
-func getDevicesInfo() []DeviceInfo {
-	return []DeviceInfo{
-		DeviceInfo{"splinter", false},
-		DeviceInfo{"shredder", false},
-		DeviceInfo{"donatello", true},
-	}
+type DevicesInfo []DeviceInfo
+
+// Devices Global variable holding all device info
+var Devices DevicesInfo = DevicesInfo{
+	DeviceInfo{"splinter", false},
+	DeviceInfo{"shredder", false},
+	DeviceInfo{"donatello", true},
 }
 
 // getFreeDevices Get slice of all currently free devices
-func getFreeDevices() []DeviceInfo {
-	var freeDevices []DeviceInfo
+func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
+	var freeDevices DevicesInfo
 
-	for _, device := range getDevicesInfo() {
+	for _, device := range devicesInfo {
 		if !device.Reserved {
 			freeDevices = append(freeDevices, device)
 		}
@@ -35,10 +36,10 @@ func getFreeDevices() []DeviceInfo {
 }
 
 // generateDeviceBlocks Generates option block objects to be used as poll elements in modal
-func generateDeviceBlocks() []*slack.OptionBlockObject {
+func generateDeviceBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
-	for _, device := range getFreeDevices() {
+	for _, device := range getFreeDevices(devices) {
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
 			slack.NewTextBlockObject("plain_text", device.Name, false, false),
@@ -50,32 +51,17 @@ func generateDeviceBlocks() []*slack.OptionBlockObject {
 	return deviceBlocks
 }
 
-func GenerateModalRequest() slack.ModalViewRequest {
-	// Create a ModalViewRequest with a header and two inputs
-	titleText := slack.NewTextBlockObject("plain_text", MReserveDeviceTitle, false, false)
-	closeText := slack.NewTextBlockObject("plain_text", "Close", false, false)
-	submitText := slack.NewTextBlockObject("plain_text", "Submit", false, false)
-
-	headerText := slack.NewTextBlockObject("mrkdwn", "Choose a device you would like to reserve", false, false)
-	headerSection := slack.NewSectionBlock(headerText, nil, nil)
-
-	deviceOptionBlocks := generateDeviceBlocks()
+func GenerateReserveDeviceModalRequest(devices DevicesInfo) slack.ModalViewRequest {
+	deviceOptionBlocks := generateDeviceBlocks(devices)
 	// Turn device blocks to a poll/action element block
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReserveDeviceCheckboxId, deviceOptionBlocks...)
 	actionBlocks := slack.NewActionBlock(MReserveDeviceActionId, deviceCheckboxGroup)
 
+	header := "Choose a device you would like to reserve"
+	headerText := slack.NewTextBlockObject("mrkdwn", header, false, false)
+	headerSection := slack.NewSectionBlock(headerText, nil, nil)
+
 	// Add header text and action(poll) elem to slice of modal blocks
 	allBlocks := []slack.Block{headerSection, actionBlocks}
-
-	blocks := slack.Blocks{
-		BlockSet: allBlocks,
-	}
-
-	var modalRequest slack.ModalViewRequest
-	modalRequest.Type = slack.ViewType("modal")
-	modalRequest.Title = titleText
-	modalRequest.Close = closeText
-	modalRequest.Submit = submitText
-	modalRequest.Blocks = blocks
-	return modalRequest
+	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }
