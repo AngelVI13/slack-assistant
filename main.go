@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-
+    // examples taken from: https://towardsdatascience.com/develop-a-slack-bot-using-golang-1025b3e606bc
 	// Load Env variables from .dot file
 	godotenv.Load(".env")
 

@@ -51,11 +51,27 @@ func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
 	return allDevices
 }
 
-// generateDeviceBlocks Generates option block objects to be used as poll elements in modal
-func generateDeviceBlocks(devices DevicesInfo, filter func(DevicesInfo) DevicesInfo) []*slack.OptionBlockObject {
+// generateDeviceOptionBlocks Generates option block objects to be used as poll elements in modal
+func generateDeviceOptionBlocks(devices DevicesInfo, filter func(DevicesInfo) DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range filter(devices) {
+		sectionBlock := slack.NewOptionBlockObject(
+			device.Name,
+			slack.NewTextBlockObject("plain_text", device.Name, false, false),
+			nil, // TODO: maybe add description
+		)
+		deviceBlocks = append(deviceBlocks, sectionBlock)
+	}
+
+	return deviceBlocks
+}
+
+// generateDeviceInfoBlocks Generates device block objects to be used as elements in modal
+func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
+	var deviceBlocks []*slack.OptionBlockObject
+
+	for _, device := range devices {
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
 			slack.NewTextBlockObject("plain_text", device.Name, false, false),

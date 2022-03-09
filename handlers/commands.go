@@ -9,18 +9,20 @@ import (
 
 // HandleSlashCommand will take a slash command and route to the appropriate function
 func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (interface{}, error) {
+    // TODO: Ignore commands from channels that the bot is not part of !!! 
 	// We need to switch depending on the command
 	switch command.Command {
 	case "/hello":
 		return nil, HandleHelloCommand(command, client)
 	case "/reserve-device":
-		return nil, HandleDeviceCommand(command, client, modals.Devices, modals.GenerateReserveDeviceModalRequest)
+		return nil, HandleDeviceCommand(command, client, modals.Devices, &modals.ReserveDeviceHandler{})
 	case "/release-device":
-		return nil, HandleDeviceCommand(command, client, modals.Devices, modals.GenerateReleaseDeviceModalRequest)
+		return nil, HandleDeviceCommand(command, client, modals.Devices, &modals.ReleaseDeviceHandler{})
 	case "/show-devices":
-		return nil, HandleDeviceCommand(command, client, modals.Devices, modals.GenerateShowDeviceModalRequest)
+		return nil, HandleDeviceCommand(command, client, modals.Devices, &modals.ShowDeviceHandler{})
 	}
 
+    // NOTE: Here interface (first return value) is used as Ack payload
 	return nil, nil
 }
 
@@ -53,13 +55,14 @@ func HandleHelloCommand(command slack.SlashCommand, client *slack.Client) error 
 	return nil
 }
 
+// TODO: pass devices info by value or pointer ?????
 func HandleDeviceCommand(
 	command slack.SlashCommand,
 	client *slack.Client,
 	devicesInfo modals.DevicesInfo,
-	generateModal func(modals.DevicesInfo) slack.ModalViewRequest,
+	handler ModalHandler,
 ) error {
-	modalRequest := generateModal(devicesInfo)
+	modalRequest := handler.GenerateModalRequest(devicesInfo)
 	_, err := client.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
