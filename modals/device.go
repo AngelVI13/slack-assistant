@@ -1,6 +1,7 @@
 package modals
 
 import (
+    "fmt"
 	"github.com/slack-go/slack"
 )
 
@@ -68,15 +69,14 @@ func generateDeviceOptionBlocks(devices DevicesInfo, filter func(DevicesInfo) De
 }
 
 // generateDeviceInfoBlocks Generates device block objects to be used as elements in modal
-func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
-	var deviceBlocks []*slack.OptionBlockObject
+func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
+	var deviceBlocks []*slack.SectionBlock
 
 	for _, device := range devices {
-		sectionBlock := slack.NewOptionBlockObject(
-			device.Name,
-			slack.NewTextBlockObject("plain_text", device.Name, false, false),
-			nil, // TODO: maybe add description
-		)
+        text := fmt.Sprintf("*%s*\nOnline\nReserved: %v\nLast user: %s", device.Name, device.Reserved, "Antanas")
+        sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
+        sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
+
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
 

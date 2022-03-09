@@ -16,16 +16,17 @@ func (h *ShowDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.Moda
 }
 
 func (h *ShowDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
-	deviceOptionBlocks := generateDeviceOptionBlocks(devices, getAllDevices)
-	// Turn device blocks to a poll/action element block
-	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MShowDeviceCheckboxId, deviceOptionBlocks...)
-	actionBlocks := slack.NewActionBlock(MShowDeviceActionId, deviceCheckboxGroup)
+    deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
-	header := "Devices status"
-	headerText := slack.NewTextBlockObject("mrkdwn", header, false, false)
-	headerSection := slack.NewSectionBlock(headerText, nil, nil)
+    var allBlocks []slack.Block
+    for idx, device := range deviceSectionBlocks {
+        divSection := slack.NewDividerBlock()
+        allBlocks = append(allBlocks, device)
 
-	// Add header text and action(poll) elem to slice of modal blocks
-	allBlocks := []slack.Block{headerSection, actionBlocks}
+        // do not add separator after last element
+        if idx < len(deviceSectionBlocks) - 1 {
+            allBlocks = append(allBlocks, divSection)
+        }
+    }
 	return allBlocks
 }
