@@ -8,13 +8,13 @@ const MReserveDeviceTitle = "Reserve Device"
 const MReserveDeviceActionId = "deviceSelected"
 const MReserveDeviceCheckboxId = "deviceCheckbox"
 
-type ReserveDeviceHandler struct {}
+type ReserveDeviceHandler struct{}
 
 func (h *ReserveDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.ModalViewRequest {
-    allBlocks := h.GenerateBlocks(devices)
+	allBlocks := h.GenerateBlocks(devices)
 	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }
-    
+
 func (h *ReserveDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
 	deviceOptionBlocks := generateDeviceOptionBlocks(devices, getFreeDevices)
 	// Turn device blocks to a poll/action element block
@@ -27,6 +27,5 @@ func (h *ReserveDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block
 
 	// Add header text and action(poll) elem to slice of modal blocks
 	allBlocks := []slack.Block{headerSection, actionBlocks}
-    return allBlocks
+	return allBlocks
 }
-

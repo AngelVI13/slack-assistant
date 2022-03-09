@@ -9,7 +9,7 @@ import (
 
 // HandleSlashCommand will take a slash command and route to the appropriate function
 func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (interface{}, error) {
-    // TODO: Ignore commands from channels that the bot is not part of !!! 
+	// TODO: Ignore commands from channels that the bot is not part of !!!
 	// We need to switch depending on the command
 	switch command.Command {
 	case "/hello":
@@ -22,7 +22,7 @@ func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (inter
 		return nil, HandleDeviceCommand(command, client, modals.Devices, &modals.ShowDeviceHandler{})
 	}
 
-    // NOTE: Here interface (first return value) is used as Ack payload
+	// NOTE: Here interface (first return value) is used as Ack payload
 	return nil, nil
 }
 

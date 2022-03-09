@@ -8,13 +8,13 @@ const MReleaseDeviceTitle = "Release Device"
 const MReleaseDeviceActionId = "deviceSelected"
 const MReleaseDeviceCheckboxId = "deviceCheckbox"
 
-type ReleaseDeviceHandler struct {}
+type ReleaseDeviceHandler struct{}
 
 func (h *ReleaseDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.ModalViewRequest {
-    allBlocks := h.GenerateBlocks(devices)
+	allBlocks := h.GenerateBlocks(devices)
 	return generateModalRequest(MReleaseDeviceTitle, allBlocks)
 }
-    
+
 func (h *ReleaseDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
 	deviceOptionBlocks := generateDeviceOptionBlocks(devices, getTakenDevices)
 	// Turn device blocks to a poll/action element block
@@ -27,5 +27,5 @@ func (h *ReleaseDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block
 
 	// Add header text and action(poll) elem to slice of modal blocks
 	allBlocks := []slack.Block{headerSection, actionBlocks}
-    return allBlocks
+	return allBlocks
 }
