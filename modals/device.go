@@ -1,7 +1,7 @@
 package modals
 
 import (
-    "fmt"
+	"fmt"
 	"github.com/slack-go/slack"
 )
 
@@ -73,9 +73,9 @@ func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
 	var deviceBlocks []*slack.SectionBlock
 
 	for _, device := range devices {
-        text := fmt.Sprintf("*%s*\nOnline\nReserved: %v\nLast user: %s", device.Name, device.Reserved, "Antanas")
-        sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
-        sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
+		text := fmt.Sprintf("*%s*\nOnline\nReserved: %v\nLast user: %s", device.Name, device.Reserved, "Antanas")
+		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
+		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
