@@ -22,3 +22,20 @@ func generateModalRequest(title string, blocks []slack.Block) slack.ModalViewReq
 	modalRequest.Blocks = blockSet
 	return modalRequest
 }
+
+func generateInfoModalRequest(title string, blocks []slack.Block) slack.ModalViewRequest {
+	// Create a ModalViewRequest with a header and two inputs
+	titleText := slack.NewTextBlockObject("plain_text", title, false, false)
+	closeText := slack.NewTextBlockObject("plain_text", "Close", false, false)
+
+	blockSet := slack.Blocks{
+		BlockSet: blocks,
+	}
+
+	var modalRequest slack.ModalViewRequest
+	modalRequest.Type = slack.ViewType("modal")
+	modalRequest.Title = titleText
+	modalRequest.Close = closeText
+	modalRequest.Blocks = blockSet
+	return modalRequest
+}

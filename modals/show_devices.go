@@ -12,7 +12,7 @@ type ShowDeviceHandler struct{}
 
 func (h *ShowDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(devices)
-	return generateModalRequest(MShowDeviceTitle, allBlocks)
+	return generateInfoModalRequest(MShowDeviceTitle, allBlocks)
 }
 
 func (h *ShowDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
