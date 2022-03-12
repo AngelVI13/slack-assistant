@@ -12,7 +12,6 @@ type DeviceInfo struct {
 
 type DevicesInfo []DeviceInfo
 
-// Devices Global variable holding all device info
 var Devices DevicesInfo = DevicesInfo{
 	DeviceInfo{"splinter", false},
 	DeviceInfo{"shredder", false},

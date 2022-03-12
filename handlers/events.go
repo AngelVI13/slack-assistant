@@ -22,7 +22,7 @@ func HandleEventMessage(event slackevents.EventsAPIEvent, client *slack.Client) 
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.AppMentionEvent:
 			// The application has been mentioned since this Event is a Mention event
-            // TODO: rework so that payload is returned and message posting happens on top level(here)
+			// TODO: rework so that payload is returned and message posting happens on top level(here)
 			err := HandleAppMentionEvent(ev, client)
 			if err != nil {
 				return err
