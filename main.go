@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/AngelVI13/slack-assistant/handlers"
+	"github.com/AngelVI13/slack-assistant/modals"
 	"log"
 	"os"
 
@@ -30,12 +31,19 @@ func main() {
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
+	devicesInfo := modals.DevicesInfo{
+		modals.DeviceInfo{"splinter", false},
+		modals.DeviceInfo{"shredder", false},
+		modals.DeviceInfo{"donatello", true},
+	}
+	deviceManager := handlers.DeviceManager{devicesInfo, socketClient}
+
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
 	// Make this cancel called properly in a real program , graceful shutdown etc
 	defer cancel()
 
-	go handlers.ProcessMessageLoop(ctx, client, socketClient)
+	go deviceManager.ProcessMessageLoop(ctx)
 
 	socketClient.Run()
 }

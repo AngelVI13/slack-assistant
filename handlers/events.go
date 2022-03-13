@@ -6,13 +6,14 @@ import (
 	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
+	"github.com/slack-go/slack/socketmode"
 	"log"
 	"strings"
 	"time"
 )
 
 // HandleEventMessage will take an event and handle it properly based on the type of event
-func HandleEventMessage(event slackevents.EventsAPIEvent, client *slack.Client) error {
+func HandleEventMessage(event slackevents.EventsAPIEvent, client *socketmode.Client) error {
 	switch event.Type {
 	// First we check if this is an CallbackEvent
 	case slackevents.CallbackEvent:
@@ -35,7 +36,7 @@ func HandleEventMessage(event slackevents.EventsAPIEvent, client *slack.Client) 
 }
 
 // HandleAppMentionEvent is used to take care of the AppMentionEvent when the bot is mentioned
-func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *slack.Client) error {
+func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmode.Client) error {
 
 	// Grab the user name based on the ID of the one who mentioned the bot
 	user, err := client.GetUserInfo(event.User)
@@ -77,7 +78,7 @@ func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *slack.Cli
 	return nil
 }
 
-func HandleInteractionEvent(interaction slack.InteractionCallback, client *slack.Client) error {
+func HandleInteractionEvent(interaction slack.InteractionCallback, client *socketmode.Client) error {
 	// This is where we would handle the interaction
 	// Switch depending on the Type
 	log.Printf("The action called is: %s\n", interaction.ActionID)

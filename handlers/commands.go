@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/socketmode"
 	"time"
 )
 
 // HandleSlashCommand will take a slash command and route to the appropriate function
-func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (interface{}, error) {
+func HandleSlashCommand(command slack.SlashCommand, client *socketmode.Client) (interface{}, error) {
 	// TODO: Ignore commands from channels that the bot is not part of !!!
 	// We need to switch depending on the command
 	switch command.Command {
@@ -27,7 +28,7 @@ func HandleSlashCommand(command slack.SlashCommand, client *slack.Client) (inter
 }
 
 // HandleHelloCommand will take care of /hello submissions
-func HandleHelloCommand(command slack.SlashCommand, client *slack.Client) error {
+func HandleHelloCommand(command slack.SlashCommand, client *socketmode.Client) error {
 	// The Input is found in the text field so
 	// Create the attachment and assigned based on the message
 	attachment := slack.Attachment{}
@@ -58,7 +59,7 @@ func HandleHelloCommand(command slack.SlashCommand, client *slack.Client) error 
 // TODO: pass devices info by value or pointer ?????
 func HandleDeviceCommand(
 	command slack.SlashCommand,
-	client *slack.Client,
+	client *socketmode.Client,
 	devicesInfo modals.DevicesInfo,
 	handler ModalHandler,
 ) error {
