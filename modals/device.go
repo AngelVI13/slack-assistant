@@ -48,7 +48,7 @@ func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
 	return allDevices
 }
 
-// generateDeviceFreeOptionBlocks Generates option block objects for every free device 
+// generateDeviceFreeOptionBlocks Generates option block objects for every free device
 // to be used as poll elements in modal
 func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
@@ -65,7 +65,7 @@ func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObj
 	return deviceBlocks
 }
 
-// generateDeviceTakenOptionBlocks Generates option block objects for every taken device 
+// generateDeviceTakenOptionBlocks Generates option block objects for every taken device
 // to be used as poll elements in modal
 func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject

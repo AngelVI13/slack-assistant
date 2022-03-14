@@ -17,6 +17,18 @@ func (h *ReleaseDeviceHandler) GenerateModalRequest(command *slack.SlashCommand,
 
 func (h *ReleaseDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
 	deviceOptionBlocks := generateDeviceTakenOptionBlocks(devices)
+
+	// If no devices are taken -> return a simple message to the user
+	if len(deviceOptionBlocks) <= 0 {
+		return []slack.Block{
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject("mrkdwn", "All devices are free, nothing to release", false, false),
+				nil,
+				nil,
+			),
+		}
+	}
+
 	// Turn device blocks to a poll/action element block
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReleaseDeviceCheckboxId, deviceOptionBlocks...)
 	actionBlocks := slack.NewActionBlock(MReleaseDeviceActionId, deviceCheckboxGroup)
