@@ -3,11 +3,9 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
-	"log"
 	"strings"
 	"time"
 )
@@ -58,6 +56,7 @@ func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmod
 			Value: user.Name,
 		},
 	}
+	// TODO: show help here
 	if strings.Contains(text, "hello") {
 		// Greet the user
 		attachment.Text = fmt.Sprintf("Hello %s", user.Name)
@@ -75,33 +74,5 @@ func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmod
 	if err != nil {
 		return fmt.Errorf("failed to post message: %w", err)
 	}
-	return nil
-}
-
-func HandleInteractionEvent(interaction slack.InteractionCallback, client *socketmode.Client) error {
-	// This is where we would handle the interaction
-	// Switch depending on the Type
-	log.Printf("The action called is: %s\n", interaction.ActionID)
-	log.Printf("The response was of type: %s\n", interaction.Type)
-	switch interaction.Type {
-	case slack.InteractionTypeBlockActions:
-		// This is a block action, so we need to handle it
-
-		for _, action := range interaction.ActionCallback.BlockActions {
-			log.Printf("%+v", action)
-			log.Println("Selected option: ", action.SelectedOptions)
-
-		}
-
-	case slack.InteractionTypeViewSubmission:
-		// NOTE: we can use title text to determine which modal was submitted
-		log.Printf("----> %+v", interaction.View.Title.Text == modals.MReserveDeviceTitle)
-		for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-			log.Printf("%+v\n", selected.Value)
-		}
-	default:
-
-	}
-
 	return nil
 }

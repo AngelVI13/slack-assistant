@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/AngelVI13/slack-assistant/modals"
 	"log"
+	"time"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -11,7 +13,7 @@ import (
 )
 
 type DeviceManager struct {
-	DevicesInfo modals.DevicesInfo
+	Devices     *modals.DevicesInfo
 	SlackClient *socketmode.Client
 }
 
@@ -39,7 +41,7 @@ func (dm *DeviceManager) processEventInteractive(event socketmode.Event) {
 		return
 	}
 
-	err := HandleInteractionEvent(interaction, dm.SlackClient)
+	err := dm.handleInteractionEvent(interaction)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,7 +57,7 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 		return
 	}
 	// handleSlashCommand will take care of the command
-	payload, err := HandleSlashCommand(command, dm.SlackClient)
+	payload, err := dm.handleSlashCommand(command)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -65,11 +67,7 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 
 }
 
-// TODO: create a class SocketHandler that has all processing functions attached to it
-//       and keeps a poitner to the socketClient & device Info data etc.
 func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
-	log.Println(dm.DevicesInfo)
-
 	// Create a for loop that selects either the context cancellation or the events incomming
 	for {
 		select {
@@ -93,4 +91,106 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// handleSlashCommand will take a slash command and route to the appropriate function
+func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) (interface{}, error) {
+	// TODO: Ignore commands from channels that the bot is not part of !!!
+	// We need to switch depending on the command
+	// TODO: make these commands into constants and provide them to use whenever they mention the bot
+	switch command.Command {
+	case "/hello":
+		return nil, dm.handleHelloCommand(command)
+	case "/reserve-device":
+		return nil, dm.handleDeviceCommand(command, &modals.ReserveDeviceHandler{})
+	case "/release-device":
+		return nil, dm.handleDeviceCommand(command, &modals.ReleaseDeviceHandler{})
+	case "/show-devices":
+		return nil, dm.handleDeviceCommand(command, &modals.ShowDeviceHandler{})
+	}
+
+	// NOTE: Here interface (first return value) is used as Ack payload
+	return nil, nil
+}
+
+// handleHelloCommand will take care of /hello submissions
+func (dm *DeviceManager) handleHelloCommand(command slack.SlashCommand) error {
+	// The Input is found in the text field so
+	// Create the attachment and assigned based on the message
+	attachment := slack.Attachment{}
+	// Add Some default context like user who mentioned the bot
+	attachment.Fields = []slack.AttachmentField{
+		{
+			Title: "Date",
+			Value: time.Now().String(),
+		}, {
+			Title: "Initializer",
+			Value: command.UserName,
+		},
+	}
+
+	// Greet the user
+	attachment.Text = fmt.Sprintf("Hello %s", command.Text)
+	attachment.Color = "#4af030"
+
+	// Send the message to the channel
+	// The Channel is available in the command.ChannelID
+	_, _, err := dm.SlackClient.PostMessage(command.ChannelID, slack.MsgOptionAttachments(attachment))
+	if err != nil {
+		return fmt.Errorf("failed to post message: %w", err)
+	}
+	return nil
+}
+
+func (dm *DeviceManager) handleDeviceCommand(
+	command slack.SlashCommand,
+	handler ModalHandler,
+) error {
+	modalRequest := handler.GenerateModalRequest(*dm.Devices)
+	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
+	if err != nil {
+		return fmt.Errorf("Error opening view: %s", err)
+	}
+	return nil
+}
+
+func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCallback) error {
+	// This is where we would handle the interaction
+	// Switch depending on the Type
+	switch interaction.Type {
+	case slack.InteractionTypeBlockActions:
+		// This is triggered anytime a user interacts with a block.
+		// We base our updating on form submission instead
+		for _, action := range interaction.ActionCallback.BlockActions {
+			log.Printf("%+v", action)
+			log.Println("Selected option: ", action.SelectedOptions)
+
+		}
+
+	case slack.InteractionTypeViewSubmission:
+		// NOTE: we can use title text to determine which modal was submitted
+		switch interaction.View.Title.Text {
+		case modals.MReserveDeviceTitle:
+			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
+				for _, device := range *dm.Devices {
+					if device.Name == selected.Value {
+						device.Reserved = true
+					}
+				}
+			}
+		case modals.MReleaseDeviceTitle:
+			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
+				for _, device := range *dm.Devices {
+					if device.Name == selected.Value {
+						device.Reserved = false
+					}
+				}
+			}
+		default:
+		}
+	default:
+
+	}
+
+	return nil
 }

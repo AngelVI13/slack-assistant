@@ -32,11 +32,11 @@ func main() {
 	)
 
 	devicesInfo := modals.DevicesInfo{
-		modals.DeviceInfo{"splinter", false},
-		modals.DeviceInfo{"shredder", false},
-		modals.DeviceInfo{"donatello", true},
+		&modals.DeviceInfo{"splinter", false},
+		&modals.DeviceInfo{"shredder", false},
+		&modals.DeviceInfo{"donatello", true},
 	}
-	deviceManager := handlers.DeviceManager{devicesInfo, socketClient}
+	deviceManager := handlers.DeviceManager{&devicesInfo, socketClient}
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())

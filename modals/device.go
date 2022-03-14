@@ -10,13 +10,7 @@ type DeviceInfo struct {
 	Reserved bool
 }
 
-type DevicesInfo []DeviceInfo
-
-var Devices DevicesInfo = DevicesInfo{
-	DeviceInfo{"splinter", false},
-	DeviceInfo{"shredder", false},
-	DeviceInfo{"donatello", true},
-}
+type DevicesInfo []*DeviceInfo
 
 // getFreeDevices Get slice of all currently free devices
 func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
