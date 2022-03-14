@@ -3,11 +3,14 @@ package modals
 import (
 	"fmt"
 	"github.com/slack-go/slack"
+	"time"
 )
 
 type DeviceInfo struct {
-	Name     string
-	Reserved bool
+	Name         string
+	Reserved     bool
+	ReservedBy   string
+	ReservedTime time.Time
 }
 
 type DevicesInfo []*DeviceInfo
@@ -70,8 +73,8 @@ func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
 		emoji := ":large_orange_circle:"
 		if device.Reserved {
 			emoji = ":large_green_circle:"
-			// TODO: Add actual data here
-			status = "Reserved by Antanas at 12:05"
+			timeStr := device.ReservedTime.Format("Mon 15:04:05")
+			status = fmt.Sprintf("Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
 		}
 		text := fmt.Sprintf("%s *%s*\n\t\t%s", emoji, device.Name, status)
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)

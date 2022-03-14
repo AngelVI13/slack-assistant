@@ -10,7 +10,7 @@ const MReserveDeviceCheckboxId = "deviceCheckbox"
 
 type ReserveDeviceHandler struct{}
 
-func (h *ReserveDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.ModalViewRequest {
+func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices DevicesInfo) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(devices)
 	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }

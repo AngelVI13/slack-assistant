@@ -10,7 +10,7 @@ const MShowDeviceCheckboxId = "deviceCheckbox"
 
 type ShowDeviceHandler struct{}
 
-func (h *ShowDeviceHandler) GenerateModalRequest(devices DevicesInfo) slack.ModalViewRequest {
+func (h *ShowDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices DevicesInfo) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(devices)
 	return generateInfoModalRequest(MShowDeviceTitle, allBlocks)
 }

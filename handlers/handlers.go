@@ -6,6 +6,6 @@ import (
 )
 
 type ModalHandler interface {
-	GenerateModalRequest(modals.DevicesInfo) slack.ModalViewRequest
+	GenerateModalRequest(*slack.SlashCommand, modals.DevicesInfo) slack.ModalViewRequest
 	GenerateBlocks(modals.DevicesInfo) []slack.Block
 }

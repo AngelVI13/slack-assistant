@@ -102,11 +102,11 @@ func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) (interfa
 	case "/hello":
 		return nil, dm.handleHelloCommand(command)
 	case "/reserve-device":
-		return nil, dm.handleDeviceCommand(command, &modals.ReserveDeviceHandler{})
+		return nil, dm.handleDeviceCommand(&command, &modals.ReserveDeviceHandler{})
 	case "/release-device":
-		return nil, dm.handleDeviceCommand(command, &modals.ReleaseDeviceHandler{})
+		return nil, dm.handleDeviceCommand(&command, &modals.ReleaseDeviceHandler{})
 	case "/show-devices":
-		return nil, dm.handleDeviceCommand(command, &modals.ShowDeviceHandler{})
+		return nil, dm.handleDeviceCommand(&command, &modals.ShowDeviceHandler{})
 	}
 
 	// NOTE: Here interface (first return value) is used as Ack payload
@@ -143,10 +143,10 @@ func (dm *DeviceManager) handleHelloCommand(command slack.SlashCommand) error {
 }
 
 func (dm *DeviceManager) handleDeviceCommand(
-	command slack.SlashCommand,
+	command *slack.SlashCommand, // TODO: pass by pointer
 	handler ModalHandler,
 ) error {
-	modalRequest := handler.GenerateModalRequest(*dm.Devices)
+	modalRequest := handler.GenerateModalRequest(command, *dm.Devices)
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
@@ -159,13 +159,15 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	// Switch depending on the Type
 	switch interaction.Type {
 	case slack.InteractionTypeViewSubmission:
-		// NOTE: we can use title text to determine which modal was submitted
+		// NOTE: we use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
 				for _, device := range *dm.Devices {
 					if device.Name == selected.Value {
 						device.Reserved = true
+						device.ReservedBy = interaction.User.Name
+						device.ReservedTime = time.Now()
 					}
 				}
 			}

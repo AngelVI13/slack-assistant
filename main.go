@@ -6,6 +6,7 @@ import (
 	"github.com/AngelVI13/slack-assistant/modals"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/slack-go/slack"
@@ -32,9 +33,9 @@ func main() {
 	)
 
 	devicesInfo := modals.DevicesInfo{
-		&modals.DeviceInfo{"splinter", false},
-		&modals.DeviceInfo{"shredder", false},
-		&modals.DeviceInfo{"donatello", true},
+		&modals.DeviceInfo{"splinter", false, "", time.Now()},
+		&modals.DeviceInfo{"shredder", false, "", time.Now()},
+		&modals.DeviceInfo{"donatello", true, "Antanas", time.Now()},
 	}
 	deviceManager := handlers.DeviceManager{&devicesInfo, socketClient}
 
