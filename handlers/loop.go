@@ -103,6 +103,7 @@ func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) (interfa
 		return nil, dm.handleHelloCommand(command)
 	case "/reserve-device":
 		return nil, dm.handleDeviceCommand(&command, &modals.ReserveDeviceHandler{})
+		// FIXME: release fails when there are no devices to release
 	case "/release-device":
 		return nil, dm.handleDeviceCommand(&command, &modals.ReleaseDeviceHandler{})
 	case "/show-devices":

@@ -48,14 +48,33 @@ func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
 	return allDevices
 }
 
-// generateDeviceOptionBlocks Generates option block objects to be used as poll elements in modal
-func generateDeviceOptionBlocks(devices DevicesInfo, filter func(DevicesInfo) DevicesInfo) []*slack.OptionBlockObject {
+// generateDeviceFreeOptionBlocks Generates option block objects to be used as poll elements in modal
+func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
-	for _, device := range filter(devices) {
+	for _, device := range getFreeDevices(devices) {
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
-			slack.NewTextBlockObject("plain_text", device.Name, false, false),
+			slack.NewTextBlockObject("mrkdwn", device.Name, false, false),
+			nil, // TODO: maybe add description
+		)
+		deviceBlocks = append(deviceBlocks, sectionBlock)
+	}
+
+	return deviceBlocks
+}
+
+// generateDeviceTakenOptionBlocks Generates option block objects to be used as poll elements in modal
+func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
+	var deviceBlocks []*slack.OptionBlockObject
+
+	for _, device := range getTakenDevices(devices) {
+		timeStr := device.ReservedTime.Format("Mon 15:04:05")
+		status := fmt.Sprintf("*%s*\n\tReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.Name, device.ReservedBy, timeStr)
+
+		sectionBlock := slack.NewOptionBlockObject(
+			device.Name,
+			slack.NewTextBlockObject("mrkdwn", status, false, false),
 			nil, // TODO: maybe add description
 		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
@@ -70,9 +89,9 @@ func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
 
 	for _, device := range devices {
 		status := "Free"
-		emoji := ":large_orange_circle:"
+		emoji := ":large_green_circle:"
 		if device.Reserved {
-			emoji = ":large_green_circle:"
+			emoji = ":large_orange_circle:"
 			timeStr := device.ReservedTime.Format("Mon 15:04:05")
 			status = fmt.Sprintf("Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
 		}

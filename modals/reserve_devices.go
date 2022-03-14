@@ -16,7 +16,7 @@ func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand,
 }
 
 func (h *ReserveDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
-	deviceOptionBlocks := generateDeviceOptionBlocks(devices, getFreeDevices)
+	deviceOptionBlocks := generateDeviceFreeOptionBlocks(devices)
 	// Turn device blocks to a poll/action element block
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReserveDeviceCheckboxId, deviceOptionBlocks...)
 	actionBlocks := slack.NewActionBlock(MReserveDeviceActionId, deviceCheckboxGroup)
