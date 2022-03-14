@@ -158,15 +158,6 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	// This is where we would handle the interaction
 	// Switch depending on the Type
 	switch interaction.Type {
-	case slack.InteractionTypeBlockActions:
-		// This is triggered anytime a user interacts with a block.
-		// We base our updating on form submission instead
-		for _, action := range interaction.ActionCallback.BlockActions {
-			log.Printf("%+v", action)
-			log.Println("Selected option: ", action.SelectedOptions)
-
-		}
-
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we can use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
