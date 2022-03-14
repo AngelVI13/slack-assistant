@@ -48,7 +48,8 @@ func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
 	return allDevices
 }
 
-// generateDeviceFreeOptionBlocks Generates option block objects to be used as poll elements in modal
+// generateDeviceFreeOptionBlocks Generates option block objects for every free device 
+// to be used as poll elements in modal
 func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
@@ -56,7 +57,7 @@ func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObj
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
 			slack.NewTextBlockObject("mrkdwn", device.Name, false, false),
-			nil, // TODO: maybe add description
+			nil, // TODO: maybe add any extra info to description (i.e. proxy port etc.)
 		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
@@ -64,18 +65,19 @@ func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObj
 	return deviceBlocks
 }
 
-// generateDeviceTakenOptionBlocks Generates option block objects to be used as poll elements in modal
+// generateDeviceTakenOptionBlocks Generates option block objects for every taken device 
+// to be used as poll elements in modal
 func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getTakenDevices(devices) {
 		timeStr := device.ReservedTime.Format("Mon 15:04:05")
-		status := fmt.Sprintf("*%s*\n\tReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.Name, device.ReservedBy, timeStr)
+		status := fmt.Sprintf("\tReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
 
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
+			slack.NewTextBlockObject("mrkdwn", device.Name, false, false),
 			slack.NewTextBlockObject("mrkdwn", status, false, false),
-			nil, // TODO: maybe add description
 		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
