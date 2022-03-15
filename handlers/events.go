@@ -6,8 +6,6 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
-	"strings"
-	"time"
 )
 
 // HandleEventMessage will take an event and handle it properly based on the type of event
@@ -35,42 +33,24 @@ func HandleEventMessage(event slackevents.EventsAPIEvent, client *socketmode.Cli
 
 // HandleAppMentionEvent is used to take care of the AppMentionEvent when the bot is mentioned
 func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmode.Client) error {
-
 	// Grab the user name based on the ID of the one who mentioned the bot
 	user, err := client.GetUserInfo(event.User)
 	if err != nil {
 		return err
 	}
-	// Check if the user said Hello to the bot
-	text := strings.ToLower(event.Text)
 
-	// Create the attachment and assigned based on the message
-	attachment := slack.Attachment{}
-	// Add Some default context like user who mentioned the bot
-	attachment.Fields = []slack.AttachmentField{
-		{
-			Title: "Date",
-			Value: time.Now().String(),
-		}, {
-			Title: "Initializer",
-			Value: user.Name,
-		},
+	// Create a help text from the supported slash commands
+	// TODO: maybe add a command description?
+	helpText := ""
+	for key := range SlashCommands {
+		helpText += fmt.Sprintf(":black_medium_small_square: %s\n", key)
 	}
-	// TODO: show help here
-	if strings.Contains(text, "hello") {
-		// Greet the user
-		attachment.Text = fmt.Sprintf("Hello %s", user.Name)
-		attachment.Pretext = "Greetings"
-		attachment.Color = "#4af030"
-	} else {
-		// Send a message to the user
-		attachment.Text = fmt.Sprintf("How can I help you %s?", user.Name)
-		attachment.Pretext = "How can I be of service"
-		attachment.Color = "#3d3d3d"
-	}
+	// Send a message to the user
+	text := fmt.Sprintf("Here are some useful commands, *%s*:\n%s", user.Name, helpText)
+
 	// Send the message to the channel
 	// The Channel is available in the event message
-	_, _, err = client.PostMessage(event.Channel, slack.MsgOptionAttachments(attachment))
+	_, _, err = client.PostMessage(event.Channel, slack.MsgOptionText(text, false))
 	if err != nil {
 		return fmt.Errorf("failed to post message: %w", err)
 	}
