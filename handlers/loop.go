@@ -95,7 +95,8 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 	_, userAllowed := dm.Users[command.UserName]
 	if !userAllowed {
 		log.Printf("Unauthorized user is sending command [%s] to the bot %s", command.Command, command.UserName)
-		// TODO: Let the user know that they don't have rights to trigger the bot
+
+		dm.handleUnauthorizedUserCommand(&command)
 		dm.SlackClient.Ack(*event.Request, nil)
 		return
 	}
@@ -125,6 +126,7 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 			switch event.Type {
 			case socketmode.EventTypeEventsAPI:
 				// Handle mentions
+				// NOTE: there is no user restriction for app mentions
 				dm.processEventApi(event)
 			case socketmode.EventTypeSlashCommand:
 				dm.processSlashCommand(event)
@@ -133,6 +135,18 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 				dm.processEventInteractive(event)
 			}
 		}
+	}
+}
+
+// handleUnauthorizedUserCommand will show an error message modal to user.
+// Crashes in case the slack client could not open model view
+func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
+	handler := &modals.UnauthorizedHandler{}
+	// TODO: generalize GenerateModalRequest to accept variadic arguments and just do casting wherever needed
+	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
+	if err != nil {
+		log.Fatalf("Error opening view: %s", err)
 	}
 }
 
