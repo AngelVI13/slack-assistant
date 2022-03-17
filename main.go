@@ -37,7 +37,7 @@ func main() {
 		"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
 		"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
 	}
-	users := map[handlers.UserName]handlers.AccessRight{
+	users := map[string]handlers.AccessRight{
 		"angel.iliev":      handlers.STANDARD,
 		"ugnius.bertasius": handlers.ADMIN,
 	}

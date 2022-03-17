@@ -24,7 +24,6 @@ var SlashCommands = map[string]ModalHandler{
 }
 
 type DeviceName string
-type UserName string
 type AccessRight int
 
 // NOTE: Currently access rights are not used
@@ -35,7 +34,7 @@ const (
 
 type DeviceManager struct {
 	Devices     map[DeviceName]*modals.DeviceProps
-	Users       map[UserName]AccessRight
+	Users       map[string]AccessRight
 	SlackClient *socketmode.Client
 }
 
@@ -90,6 +89,14 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 	command, ok := event.Data.(slack.SlashCommand)
 	if !ok {
 		log.Printf("Could not type cast the message to a SlashCommand: %v\n", command)
+		return
+	}
+
+	_, userAllowed := dm.Users[command.UserName]
+	if !userAllowed {
+		log.Printf("Unauthorized user is sending command [%s] to the bot %s", command.Command, command.UserName)
+		// TODO: Let the user know that they don't have rights to trigger the bot
+		dm.SlackClient.Ack(*event.Request, nil)
 		return
 	}
 
