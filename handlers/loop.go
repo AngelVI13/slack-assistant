@@ -48,7 +48,7 @@ func NewDevicesMap() DevicesMap {
 // NewDevicesMapFromJson Takes json data as input and returns a populated DevicesMap object
 func NewDevicesMapFromJson(data []byte) DevicesMap {
 	devicesList := NewDevicesMap()
-	devicesList.SynchronizeFromFile(data)
+	devicesList.synchronizeFromFile(data)
 	return devicesList
 }
 
@@ -65,11 +65,35 @@ func (d *DevicesMap) SynchronizeToFile() {
 	}
 }
 
-func (d *DevicesMap) SynchronizeFromFile(data []byte) {
-	err := json.Unmarshal(data, &d.Devices)
+func (d *DevicesMap) synchronizeFromFile(data []byte) {
+	// Unmarshal the provided data into the solid map
+	err := json.Unmarshal(data, d)
 	if err != nil {
 		log.Fatalf("Could not parse devices file %s. Error: %+v", params.DEVICES_FILE, err)
 	}
+}
+
+func (d *DevicesMap) Reserve(deviceName, user string) {
+	device, ok := d.Devices[DeviceName(deviceName)]
+	if !ok {
+		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
+	}
+	device.Reserved = true
+	device.ReservedBy = user
+	device.ReservedTime = time.Now()
+
+	d.SynchronizeToFile()
+}
+
+func (d *DevicesMap) Release(deviceName string) {
+	// TODO: should i keep track of who released the device or just log it
+	device, ok := d.Devices[DeviceName(deviceName)]
+	if !ok {
+		log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
+	}
+	device.Reserved = false
+
+	d.SynchronizeToFile()
 }
 
 type DeviceManager struct {
@@ -221,21 +245,11 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				device, ok := dm.Devices[DeviceName(selected.Value)]
-				if !ok {
-					panic(fmt.Errorf("Wrong device name %s, %+v", selected.Value, dm.Devices))
-				}
-				device.Reserved = true
-				device.ReservedBy = interaction.User.Name
-				device.ReservedTime = time.Now()
+				dm.Reserve(selected.Value, interaction.User.Name)
 			}
 		case modals.MReleaseDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
-				device, ok := dm.Devices[DeviceName(selected.Value)]
-				if !ok {
-					panic(fmt.Errorf("Wrong device name %s, %+v", selected.Value, dm.Devices))
-				}
-				device.Reserved = false
+				dm.Release(selected.Value)
 			}
 		default:
 		}

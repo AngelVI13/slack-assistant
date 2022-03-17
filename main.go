@@ -28,6 +28,7 @@ func main() {
 	// Convert simple slack client to socket mode client
 	socketClient := socketmode.New(
 		client,
+		// TODO: Improve logging and load debug flag from cli arg or .env
 		socketmode.OptionDebug(true),
 		// Option to set a custom logger
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
@@ -40,6 +41,7 @@ func main() {
 	users := utils.GetUsers("users.json")
 	deviceManager := handlers.DeviceManager{devicesInfo, users, socketClient}
 
+	// TODO: check if multiple users can interact with the bot at the same time !!!
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
 	// Make this cancel called properly in a real program , graceful shutdown etc
