@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"context"
-    "os"
-    "encoding/json"
+	"encoding/json"
 	"fmt"
 	"github.com/AngelVI13/slack-assistant/modals"
 	"github.com/AngelVI13/slack-assistant/params"
 	"log"
+	"os"
 	"sort"
 	"time"
 
@@ -36,24 +36,24 @@ const (
 )
 
 type DevicesMap struct {
-    Devices map[DeviceName]*modals.DeviceProps
+	Devices map[DeviceName]*modals.DeviceProps
 }
 
 func (d *DevicesMap) SynchronizeToFile() {
-    data, err := json.Marshal(d)
-    if err != nil {
-        log.Fatal(err)
-    }
+	data, err := json.Marshal(d)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    err = os.WriteFile(params.DEVICES_FILE, data, 0666)
+	err = os.WriteFile(params.DEVICES_FILE, data, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 type DeviceManager struct {
-	DevicesMap     
-    // TODO: add possibility to extend this from slack 
+	DevicesMap
+	// TODO: add possibility to extend this from slack
 	Users       map[string]AccessRight
 	SlackClient *socketmode.Client
 }

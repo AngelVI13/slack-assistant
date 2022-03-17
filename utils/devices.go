@@ -14,9 +14,9 @@ import (
 )
 
 type Worker struct {
-	Name        string      `json:"name"`
-	Password    string      `json:"password"`
-	WorkerSetup []string    `json:"worker_setup"`
+	Name        string             `json:"name"`
+	Password    string             `json:"password"`
+	WorkerSetup []string           `json:"worker_setup"`
 	Properties  modals.WorkerProps `json:"properties"`
 }
 
@@ -48,9 +48,9 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	// 1.b Else -> ask ta endpoint for list of devices & their properties & create a device info file
 	// TODO: make sure to update the device file anytime somebody reserves or releases a device
 
-    devicesList := handlers.DevicesMap{
-        Devices: make(map[handlers.DeviceName]*modals.DeviceProps),
-    }
+	devicesList := handlers.DevicesMap{
+		Devices: make(map[handlers.DeviceName]*modals.DeviceProps),
+	}
 
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -60,17 +60,17 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 			log.Fatal(err)
 		}
 
-        for _, worker := range info.Workers {
-            devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps {
-                Name         : worker.Name,
-                Reserved     : false,
-                ReservedBy   : "",
-                ReservedTime : time.Now(), // TODO: how do i provide empty time?? 
-                Props : worker.Properties,
-            }
-        }
+		for _, worker := range info.Workers {
+			devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps{
+				Name:         worker.Name,
+				Reserved:     false,
+				ReservedBy:   "",
+				ReservedTime: time.Now(), // TODO: how do i provide empty time??
+				Props:        worker.Properties,
+			}
+		}
 
-        devicesList.SynchronizeToFile()  // save all obtained data to file
+		devicesList.SynchronizeToFile() // save all obtained data to file
 	} else if err != nil {
 		// In case there is an error different that FileNotFound -> fail program
 		log.Fatal(err)
@@ -90,13 +90,13 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 		}
 	*/
 
-    /*
-	devicesList = map[handlers.DeviceName]*modals.DeviceProps{
-		"splinter":  &modals.DeviceProps{"splinter", false, "", time.Now()},
-		"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
-		"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
-	}
-    */
+	/*
+		devicesList = map[handlers.DeviceName]*modals.DeviceProps{
+			"splinter":  &modals.DeviceProps{"splinter", false, "", time.Now()},
+			"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
+			"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
+		}
+	*/
 
 	log.Printf("device list loaded successfully\n%+v", devicesList)
 	return devicesList

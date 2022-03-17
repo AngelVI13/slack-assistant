@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"github.com/AngelVI13/slack-assistant/handlers"
-	"github.com/AngelVI13/slack-assistant/utils"
 	"github.com/AngelVI13/slack-assistant/params"
+	"github.com/AngelVI13/slack-assistant/utils"
 	"log"
 	"os"
 
@@ -33,7 +33,7 @@ func main() {
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
-    // TODO: accept devices file & project endpoint from cli arg or .env file
+	// TODO: accept devices file & project endpoint from cli arg or .env file
 	devicesInfo := utils.GetDevices(params.DEVICES_FILE, params.TA_PROJECT_WORKERS_ENDPOINT)
 
 	// TODO: accept this as cli argument or from .env file
