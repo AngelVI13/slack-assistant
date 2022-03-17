@@ -32,12 +32,16 @@ func main() {
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
-	devicesInfo := modals.DevicesInfo{
-		&modals.DeviceInfo{"splinter", false, "", time.Now()},
-		&modals.DeviceInfo{"shredder", false, "", time.Now()},
-		&modals.DeviceInfo{"donatello", true, "Antanas", time.Now()},
+	devicesInfo := map[handlers.DeviceName]*modals.DeviceProps{
+		"splinter":  &modals.DeviceProps{"splinter", false, "", time.Now()},
+		"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
+		"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
 	}
-	deviceManager := handlers.DeviceManager{&devicesInfo, socketClient}
+	users := map[handlers.UserName]handlers.AccessRight{
+		"angel.iliev":      handlers.STANDARD,
+		"ugnius.bertasius": handlers.ADMIN,
+	}
+	deviceManager := handlers.DeviceManager{devicesInfo, users, socketClient}
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())

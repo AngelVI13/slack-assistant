@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type DeviceInfo struct {
+type DeviceProps struct {
 	Name         string
 	Reserved     bool
 	ReservedBy   string
 	ReservedTime time.Time
 }
 
-type DevicesInfo []*DeviceInfo
+type DevicesInfo []*DeviceProps
 
 // getFreeDevices Get slice of all currently free devices
 func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
