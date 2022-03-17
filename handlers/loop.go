@@ -39,6 +39,20 @@ type DevicesMap struct {
 	Devices map[DeviceName]*modals.DeviceProps
 }
 
+func NewDevicesMap() DevicesMap {
+	return DevicesMap{
+		Devices: make(map[DeviceName]*modals.DeviceProps),
+	}
+}
+
+// NewDevicesMapFromJson Takes json data as input and returns a populated DevicesMap object
+func NewDevicesMapFromJson(data []byte) DevicesMap {
+	devicesList := NewDevicesMap()
+	devicesList.SynchronizeFromFile(data)
+	return devicesList
+}
+
+// TODO: add this to everything a field is updated
 func (d *DevicesMap) SynchronizeToFile() {
 	data, err := json.Marshal(d)
 	if err != nil {
@@ -48,6 +62,13 @@ func (d *DevicesMap) SynchronizeToFile() {
 	err = os.WriteFile(params.DEVICES_FILE, data, 0666)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func (d *DevicesMap) SynchronizeFromFile(data []byte) {
+	err := json.Unmarshal(data, &d.Devices)
+	if err != nil {
+		log.Fatalf("Could not parse devices file %s. Error: %+v", params.DEVICES_FILE, err)
 	}
 }
 

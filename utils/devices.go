@@ -47,10 +47,7 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	// 1.a If device info file exists -> read info from there
 	// 1.b Else -> ask ta endpoint for list of devices & their properties & create a device info file
 	// TODO: make sure to update the device file anytime somebody reserves or releases a device
-
-	devicesList := handlers.DevicesMap{
-		Devices: make(map[handlers.DeviceName]*modals.DeviceProps),
-	}
+	var devicesList handlers.DevicesMap
 
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -59,6 +56,8 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 			// No local device info and error while getting info from TMT -> fail program
 			log.Fatal(err)
 		}
+
+		devicesList := handlers.NewDevicesMap()
 
 		for _, worker := range info.Workers {
 			devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps{
@@ -76,28 +75,9 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 		log.Fatal(err)
 	}
 
-	// happy path
-	log.Println(string(data))
-	/*
-		fileData, err := os.ReadFile(path)
-		if err != nil {
-			log.Fatalf("Could not read users file %s", path)
-		}
+	// Devices file exists -> read from there
+	devicesList = handlers.NewDevicesMapFromJson(data)
 
-		err = json.Unmarshal(fileData, &usersList)
-		if err != nil {
-			log.Fatalf("Could not parse users file %s. Error: %+v", path, err)
-		}
-	*/
-
-	/*
-		devicesList = map[handlers.DeviceName]*modals.DeviceProps{
-			"splinter":  &modals.DeviceProps{"splinter", false, "", time.Now()},
-			"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
-			"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
-		}
-	*/
-
-	log.Printf("device list loaded successfully\n%+v", devicesList)
+	log.Printf("Device list loaded successfully\n%+v", devicesList)
 	return devicesList
 }
