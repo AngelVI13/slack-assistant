@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/AngelVI13/slack-assistant/handlers"
 	"github.com/AngelVI13/slack-assistant/utils"
+	"github.com/AngelVI13/slack-assistant/params"
 	"log"
 	"os"
 
@@ -32,14 +33,8 @@ func main() {
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
-	/*
-		devicesInfo := map[handlers.DeviceName]*modals.DeviceProps{
-			"splinter":  &modals.DeviceProps{"splinter", false, "", time.Now()},
-			"shredder":  &modals.DeviceProps{"shredder", false, "", time.Now()},
-			"donatello": &modals.DeviceProps{"donatello", true, "Antanas", time.Now()},
-		}
-	*/
-	devicesInfo := utils.GetDevices("fake.json", "http://10.208.1.21:12002/workers")
+    // TODO: accept devices file & project endpoint from cli arg or .env file
+	devicesInfo := utils.GetDevices(params.DEVICES_FILE, params.TA_PROJECT_WORKERS_ENDPOINT)
 
 	// TODO: accept this as cli argument or from .env file
 	users := utils.GetUsers("users.json")

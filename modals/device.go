@@ -6,11 +6,18 @@ import (
 	"time"
 )
 
+type WorkerProps struct {
+    SerialProxyHost    string `json:"serial_proxy_host"`
+    SerialProxyPort    int    `json:"serial_proxy_port"`
+    DeviceSerialNumber string `json:"device_serial_number"`
+}
+
 type DeviceProps struct {
 	Name         string
 	Reserved     bool
 	ReservedBy   string
 	ReservedTime time.Time
+    Props WorkerProps
 }
 
 type DevicesInfo []*DeviceProps
