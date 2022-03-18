@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 )
 
 type Worker struct {
@@ -60,11 +59,9 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 
 		for _, worker := range info.Workers {
 			devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps{
-				Name:         worker.Name,
-				Reserved:     false,
-				ReservedBy:   "",
-				ReservedTime: time.Now(), // TODO: how do i provide empty time??
-				Props:        worker.Properties,
+				Name:     worker.Name,
+				Reserved: false,
+				Props:    worker.Properties,
 			}
 		}
 

@@ -72,7 +72,7 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	}
 }
 
-func (d *DevicesMap) Reserve(deviceName, user string) (err string) {
+func (d *DevicesMap) Reserve(deviceName, user, userId string) (err string) {
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
@@ -85,22 +85,28 @@ func (d *DevicesMap) Reserve(deviceName, user string) (err string) {
 
 	device.Reserved = true
 	device.ReservedBy = user
+	device.ReservedById = userId
 	device.ReservedTime = time.Now()
 
 	d.SynchronizeToFile()
 	return ""
 }
 
-func (d *DevicesMap) Release(deviceName, user string) {
+func (d *DevicesMap) Release(deviceName, user string) (victimId, err string) {
 	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
 
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
 		log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
 	}
-	device.Reserved = false
 
+	device.Reserved = false
 	d.SynchronizeToFile()
+
+	if device.ReservedBy != user {
+		return device.ReservedById, fmt.Sprintf(":warning: *%s* released your (*%s*) device (*%s*)", user, device.ReservedBy, device.Name)
+	}
+	return "", ""
 }
 
 type DeviceManager struct {
@@ -280,7 +286,7 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				errStr := dm.Reserve(selected.Value, interaction.User.Name)
+				errStr := dm.Reserve(selected.Value, interaction.User.Name, interaction.User.ID)
 				if errStr != "" {
 					log.Println(errStr)
 					// If there device was already taken -> inform user by personal DM message from the bot
@@ -289,7 +295,11 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			}
 		case modals.MReleaseDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
-				dm.Release(selected.Value, interaction.User.Name)
+				victimId, errStr := dm.Release(selected.Value, interaction.User.Name)
+				if victimId != "" {
+					log.Println(errStr)
+					dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+				}
 			}
 		default:
 		}

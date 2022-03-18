@@ -16,6 +16,7 @@ type DeviceProps struct {
 	Name         string
 	Reserved     bool
 	ReservedBy   string
+	ReservedById string
 	ReservedTime time.Time
 	Props        WorkerProps
 }
