@@ -61,6 +61,7 @@ func (d *DevicesMap) SynchronizeToFile() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Println("INFO: Wrote device list to file")
 }
 
 func (d *DevicesMap) synchronizeFromFile(data []byte) {

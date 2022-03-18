@@ -56,7 +56,7 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 			log.Fatal(err)
 		}
 
-		devicesList := handlers.NewDevicesMap()
+		devicesList = handlers.NewDevicesMap()
 
 		for _, worker := range info.Workers {
 			devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps{
@@ -72,10 +72,10 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	} else if err != nil {
 		// In case there is an error different that FileNotFound -> fail program
 		log.Fatal(err)
+	} else {
+		// Devices file exists -> read from there
+		devicesList = handlers.NewDevicesMapFromJson(data)
 	}
-
-	// Devices file exists -> read from there
-	devicesList = handlers.NewDevicesMapFromJson(data)
 
 	loadedDeviceNum := len(devicesList.Devices)
 	if loadedDeviceNum == 0 {
