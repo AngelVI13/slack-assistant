@@ -23,6 +23,6 @@ func GetUsers(path string) (usersList map[string]handlers.AccessRight) {
 		log.Fatalf("No users found in (%s).", path)
 	}
 
-	log.Printf("User list loaded successfully (%d users configured)", loadedUsersNum)
+	log.Printf("INIT: User list loaded successfully (%d users configured)", loadedUsersNum)
 	return usersList
 }

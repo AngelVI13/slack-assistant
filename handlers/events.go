@@ -6,6 +6,7 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
+	"log"
 )
 
 // HandleEventMessage will take an event and handle it properly based on the type of event
@@ -37,6 +38,7 @@ func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmod
 	if err != nil {
 		return err
 	}
+	log.Printf("PROCESS: Processing mention (%s) from (%s)", event.Text, user.Name)
 
 	// Create a help text from the supported slash commands
 	// TODO: maybe add a command description?

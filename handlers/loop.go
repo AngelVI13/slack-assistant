@@ -80,6 +80,7 @@ func (d *DevicesMap) Reserve(deviceName, user string) (err string) {
 		reservedTime := device.ReservedTime.Format("Mon 15:04")
 		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
 	}
+	log.Printf("RESERVE: User (%s) reserved device (%s)", user, deviceName)
 
 	device.Reserved = true
 	device.ReservedBy = user
@@ -90,7 +91,7 @@ func (d *DevicesMap) Reserve(deviceName, user string) (err string) {
 }
 
 func (d *DevicesMap) Release(deviceName, user string) {
-	log.Printf("ACTION: User (%s) released (%s) device.", user, deviceName)
+	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
 
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
@@ -156,8 +157,7 @@ func (dm *DeviceManager) processEventApi(event socketmode.Event) {
 	// The Event sent on the channel is not the same as the EventAPI events so we need to type cast it
 	eventsAPIEvent, ok := event.Data.(slackevents.EventsAPIEvent)
 	if !ok {
-		log.Printf("Could not type cast the event to the EventsAPIEvent: %v\n", event)
-		return
+		log.Fatalf("Could not type cast the event to the EventsAPIEvent: %v\n", event)
 	}
 
 	// We need to send an Acknowledge to the slack server
@@ -173,8 +173,7 @@ func (dm *DeviceManager) processEventApi(event socketmode.Event) {
 func (dm *DeviceManager) processEventInteractive(event socketmode.Event) {
 	interaction, ok := event.Data.(slack.InteractionCallback)
 	if !ok {
-		log.Printf("Could not type cast the message to a Interaction callback: %v\n", interaction)
-		return
+		log.Fatalf("Could not type cast the message to a Interaction callback: %v\n", interaction)
 	}
 
 	err := dm.handleInteractionEvent(interaction)
@@ -188,19 +187,19 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 	// Just like before, type cast to the correct event type, this time a SlashEvent
 	command, ok := event.Data.(slack.SlashCommand)
 	if !ok {
-		log.Printf("Could not type cast the message to a SlashCommand: %v\n", command)
-		return
+		log.Fatalf("Could not type cast the message to a SlashCommand: %v\n", command)
 	}
 
 	_, userAllowed := dm.Users[command.UserName]
 	if !userAllowed {
-		log.Printf("Unauthorized user is sending command [%s] to the bot %s", command.Command, command.UserName)
+		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
 		dm.handleUnauthorizedUserCommand(&command)
 		dm.SlackClient.Ack(*event.Request, nil)
 		return
 	}
 
+	log.Printf("PROCESS: Processing SLASH (%s) from (%s)", command.Command, command.UserName)
 	// handleSlashCommand will take care of the command
 	err := dm.handleSlashCommand(command)
 	if err != nil {
@@ -282,6 +281,7 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
 				errStr := dm.Reserve(selected.Value, interaction.User.Name)
 				if errStr != "" {
+					log.Println(errStr)
 					// If there device was already taken -> inform user by personal DM message from the bot
 					dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
 				}

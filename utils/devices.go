@@ -39,7 +39,7 @@ func GetTmtWorkers(endpoint string) (*WorkersResponse, error) {
 		return nil, fmt.Errorf("Could not unmarshall workers response %s. Error: %+v", string(body), err)
 	}
 
-	log.Printf("Workers info fetched successfully")
+	log.Printf("INIT: Workers info fetched successfully")
 	return &workers, nil
 }
 
@@ -82,6 +82,6 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 		log.Fatalf("No devices found in (%s).", path)
 	}
 
-	log.Printf("Device list loaded successfully (%d devices configured)", loadedDeviceNum)
+	log.Printf("INIT: Device list loaded successfully (%d devices configured)", loadedDeviceNum)
 	return devicesList
 }
