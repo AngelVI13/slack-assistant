@@ -52,7 +52,6 @@ func NewDevicesMapFromJson(data []byte) DevicesMap {
 	return devicesList
 }
 
-// TODO: add this to everything a field is updated
 func (d *DevicesMap) SynchronizeToFile() {
 	data, err := json.Marshal(d)
 	if err != nil {
@@ -85,8 +84,9 @@ func (d *DevicesMap) Reserve(deviceName, user string) {
 	d.SynchronizeToFile()
 }
 
-func (d *DevicesMap) Release(deviceName string) {
-	// TODO: should i keep track of who released the device or just log it
+func (d *DevicesMap) Release(deviceName, user string) {
+	log.Printf("ACTION: User (%s) released (%s) device.", user, deviceName)
+
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
 		log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
@@ -217,10 +217,10 @@ func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashComma
 
 // handleSlashCommand will take a slash command and route to the appropriate function
 func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
-	// TODO: Ignore commands from channels that the bot is not part of !!!
 	handler, hasValue := SlashCommands[command.Command]
 	if !hasValue {
-		log.Printf("---> Unsupported command %s\n", command.Command)
+		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
+		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
 		return nil
 	}
 	return dm.handleDeviceCommand(&command, handler)
@@ -249,7 +249,7 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			}
 		case modals.MReleaseDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
-				dm.Release(selected.Value)
+				dm.Release(selected.Value, interaction.User.Name)
 			}
 		default:
 		}

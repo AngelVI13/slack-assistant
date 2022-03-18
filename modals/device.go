@@ -22,6 +22,15 @@ type DeviceProps struct {
 
 type DevicesInfo []*DeviceProps
 
+func (p *DeviceProps) GetPropsText() string {
+	return fmt.Sprintf(
+		"Port: %d\tHost: %s\tS/N: %s",
+		p.Props.SerialProxyPort,
+		p.Props.SerialProxyHost,
+		p.Props.DeviceSerialNumber,
+	)
+}
+
 // getFreeDevices Get slice of all currently free devices
 func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
 	var freeDevices DevicesInfo
@@ -61,10 +70,11 @@ func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObj
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getFreeDevices(devices) {
+		description := device.GetPropsText()
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
 			slack.NewTextBlockObject("mrkdwn", device.Name, false, false),
-			nil, // TODO: maybe add any extra info to description (i.e. proxy port etc.)
+			slack.NewTextBlockObject("mrkdwn", description, false, false),
 		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
@@ -78,8 +88,9 @@ func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockOb
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getTakenDevices(devices) {
-		timeStr := device.ReservedTime.Format("Mon 15:04:05")
-		status := fmt.Sprintf("\tReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
+		timeStr := device.ReservedTime.Format("Mon 15:04")
+		deviceProps := device.GetPropsText()
+		status := fmt.Sprintf("%s\nReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", deviceProps, device.ReservedBy, timeStr)
 
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
@@ -101,10 +112,11 @@ func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
 		emoji := ":large_green_circle:"
 		if device.Reserved {
 			emoji = ":large_orange_circle:"
-			timeStr := device.ReservedTime.Format("Mon 15:04:05")
+			timeStr := device.ReservedTime.Format("Mon 15:04")
 			status = fmt.Sprintf("Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
 		}
-		text := fmt.Sprintf("%s *%s*\n\t\t%s", emoji, device.Name, status)
+		deviceProps := device.GetPropsText()
+		text := fmt.Sprintf("%s *%s*\n\t\t%s\n\t\t_%s_", emoji, device.Name, deviceProps, status)
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
 		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 

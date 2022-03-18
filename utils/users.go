@@ -18,6 +18,6 @@ func GetUsers(path string) (usersList map[string]handlers.AccessRight) {
 		log.Fatalf("Could not parse users file %s. Error: %+v", path, err)
 	}
 
-	log.Printf("User list loaded successfully\n%+v", usersList)
+	log.Printf("User list loaded successfully (%d users configured)", len(usersList))
 	return usersList
 }

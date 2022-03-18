@@ -45,8 +45,7 @@ func GetTmtWorkers(endpoint string) (*WorkersResponse, error) {
 
 func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	// 1.a If device info file exists -> read info from there
-	// 1.b Else -> ask ta endpoint for list of devices & their properties & create a device info file
-	// TODO: make sure to update the device file anytime somebody reserves or releases a device
+	// 1.b Else -> ask TA endpoint for list of devices & their properties & create a device info file
 	var devicesList handlers.DevicesMap
 
 	data, err := os.ReadFile(path)
@@ -78,6 +77,6 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	// Devices file exists -> read from there
 	devicesList = handlers.NewDevicesMapFromJson(data)
 
-	log.Printf("Device list loaded successfully\n%+v", devicesList)
+	log.Printf("Device list loaded successfully (%d devices configured)", len(devicesList.Devices))
 	return devicesList
 }
