@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"github.com/AngelVI13/slack-assistant/handlers"
-	"github.com/AngelVI13/slack-assistant/params"
 	"github.com/AngelVI13/slack-assistant/utils"
 	"log"
 	"os"
@@ -34,11 +33,12 @@ func main() {
 		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
-	// TODO: accept devices file & project endpoint from cli arg or .env file
-	devicesInfo := utils.GetDevices(params.DEVICES_FILE, params.TA_PROJECT_WORKERS_ENDPOINT)
+	devicesFile := os.Getenv("SL_DEVICES_FILE")
+	workersEndpoint := os.Getenv("SL_WORKERS_ENDPOINT")
+	devicesInfo := utils.GetDevices(devicesFile, workersEndpoint)
 
-	// TODO: accept this as cli argument or from .env file
-	users := utils.GetUsers("users.json")
+	usersFile := os.Getenv("SL_USERS_FILE")
+	users := utils.GetUsers(usersFile)
 	deviceManager := handlers.DeviceManager{devicesInfo, users, socketClient}
 
 	// TODO: check if multiple users can interact with the bot at the same time !

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/AngelVI13/slack-assistant/modals"
-	"github.com/AngelVI13/slack-assistant/params"
 	"log"
 	"os"
 	"sort"
@@ -58,7 +57,7 @@ func (d *DevicesMap) SynchronizeToFile() {
 		log.Fatal(err)
 	}
 
-	err = os.WriteFile(params.DEVICES_FILE, data, 0666)
+	err = os.WriteFile(os.Getenv("SL_DEVICES_FILE"), data, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +67,7 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	// Unmarshal the provided data into the solid map
 	err := json.Unmarshal(data, d)
 	if err != nil {
-		log.Fatalf("Could not parse devices file %s. Error: %+v", params.DEVICES_FILE, err)
+		log.Fatalf("Could not parse devices file. Error: %+v", err)
 	}
 }
 

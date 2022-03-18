@@ -77,6 +77,11 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 	// Devices file exists -> read from there
 	devicesList = handlers.NewDevicesMapFromJson(data)
 
-	log.Printf("Device list loaded successfully (%d devices configured)", len(devicesList.Devices))
+	loadedDeviceNum := len(devicesList.Devices)
+	if loadedDeviceNum == 0 {
+		log.Fatalf("No devices found in (%s).", path)
+	}
+
+	log.Printf("Device list loaded successfully (%d devices configured)", loadedDeviceNum)
 	return devicesList
 }
