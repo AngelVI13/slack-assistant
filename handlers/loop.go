@@ -72,16 +72,22 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	}
 }
 
-func (d *DevicesMap) Reserve(deviceName, user string) {
+func (d *DevicesMap) Reserve(deviceName, user string) (err string) {
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
 	}
+	if device.Reserved {
+		reservedTime := device.ReservedTime.Format("Mon 15:04")
+		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
+	}
+
 	device.Reserved = true
 	device.ReservedBy = user
 	device.ReservedTime = time.Now()
 
 	d.SynchronizeToFile()
+	return ""
 }
 
 func (d *DevicesMap) Release(deviceName, user string) {
@@ -245,7 +251,11 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				dm.Reserve(selected.Value, interaction.User.Name)
+				errStr := dm.Reserve(selected.Value, interaction.User.Name)
+				if errStr != "" {
+					// If there device was already taken -> inform user by personal DM message from the bot
+					dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
+				}
 			}
 		case modals.MReleaseDeviceTitle:
 			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
