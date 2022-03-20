@@ -2,6 +2,7 @@ package modals
 
 import (
 	"github.com/slack-go/slack"
+	"github.com/AngelVI13/slack-assistant/device"
 )
 
 const MShowDeviceTitle = "Device Status"
@@ -10,12 +11,12 @@ const MShowDeviceCheckboxId = "deviceCheckbox"
 
 type ShowDeviceHandler struct{}
 
-func (h *ShowDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices DevicesInfo) slack.ModalViewRequest {
+func (h *ShowDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices device.DevicesInfo) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(devices)
 	return generateInfoModalRequest(MShowDeviceTitle, allBlocks)
 }
 
-func (h *ShowDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
+func (h *ShowDeviceHandler) GenerateBlocks(devices device.DevicesInfo) []slack.Block {
 	deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
 	var allBlocks []slack.Block

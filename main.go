@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/AngelVI13/slack-assistant/handlers"
+	"github.com/AngelVI13/slack-assistant/slack/handlers"
 	"github.com/AngelVI13/slack-assistant/utils"
 	"log"
 	"os"

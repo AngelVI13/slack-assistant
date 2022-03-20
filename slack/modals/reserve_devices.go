@@ -2,6 +2,7 @@ package modals
 
 import (
 	"github.com/slack-go/slack"
+	"github.com/AngelVI13/slack-assistant/device"
 )
 
 const MReserveDeviceTitle = "Reserve Device"
@@ -10,12 +11,12 @@ const MReserveDeviceCheckboxId = "deviceCheckbox"
 
 type ReserveDeviceHandler struct{}
 
-func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices DevicesInfo) slack.ModalViewRequest {
+func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices device.DevicesInfo) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(devices)
 	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }
 
-func (h *ReserveDeviceHandler) GenerateBlocks(devices DevicesInfo) []slack.Block {
+func (h *ReserveDeviceHandler) GenerateBlocks(devices device.DevicesInfo) []slack.Block {
 	deviceOptionBlocks := generateDeviceFreeOptionBlocks(devices)
 	// If no devices are taken -> return a simple message to the user
 	if len(deviceOptionBlocks) <= 0 {

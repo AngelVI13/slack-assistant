@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/AngelVI13/slack-assistant/handlers"
-	"github.com/AngelVI13/slack-assistant/modals"
+	"github.com/AngelVI13/slack-assistant/device"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +15,7 @@ type Worker struct {
 	Name        string             `json:"name"`
 	Password    string             `json:"password"`
 	WorkerSetup []string           `json:"worker_setup"`
-	Properties  modals.WorkerProps `json:"properties"`
+	Properties  device.WorkerProps `json:"properties"`
 }
 
 type WorkersResponse struct {
@@ -42,10 +41,10 @@ func GetTmtWorkers(endpoint string) (*WorkersResponse, error) {
 	return &workers, nil
 }
 
-func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
+func GetDevices(path, taProjectEndpoint string) device.DevicesMap {
 	// 1.a If device info file exists -> read info from there
 	// 1.b Else -> ask TA endpoint for list of devices & their properties & create a device info file
-	var devicesList handlers.DevicesMap
+	var devicesList device.DevicesMap
 
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
@@ -55,10 +54,10 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 			log.Fatal(err)
 		}
 
-		devicesList = handlers.NewDevicesMap()
+		devicesList = device.NewDevicesMap()
 
 		for _, worker := range info.Workers {
-			devicesList.Devices[handlers.DeviceName(worker.Name)] = &modals.DeviceProps{
+			devicesList.Devices[device.DeviceName(worker.Name)] = &device.DeviceProps{
 				Name:     worker.Name,
 				Reserved: false,
 				Props:    worker.Properties,
@@ -71,7 +70,7 @@ func GetDevices(path, taProjectEndpoint string) handlers.DevicesMap {
 		log.Fatal(err)
 	} else {
 		// Devices file exists -> read from there
-		devicesList = handlers.NewDevicesMapFromJson(data)
+		devicesList = device.NewDevicesMapFromJson(data)
 	}
 
 	loadedDeviceNum := len(devicesList.Devices)

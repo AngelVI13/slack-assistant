@@ -3,38 +3,13 @@ package modals
 import (
 	"fmt"
 	"github.com/slack-go/slack"
-	"time"
+	"github.com/AngelVI13/slack-assistant/device"
 )
 
-type WorkerProps struct {
-	SerialProxyHost    string `json:"serial_proxy_host"`
-	SerialProxyPort    int    `json:"serial_proxy_port"`
-	DeviceSerialNumber string `json:"device_serial_number"`
-}
-
-type DeviceProps struct {
-	Name         string
-	Reserved     bool
-	ReservedBy   string
-	ReservedById string
-	ReservedTime time.Time
-	Props        WorkerProps
-}
-
-type DevicesInfo []*DeviceProps
-
-func (p *DeviceProps) GetPropsText() string {
-	return fmt.Sprintf(
-		"Port: %d\tHost: %s\tS/N: %s",
-		p.Props.SerialProxyPort,
-		p.Props.SerialProxyHost,
-		p.Props.DeviceSerialNumber,
-	)
-}
 
 // getFreeDevices Get slice of all currently free devices
-func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
-	var freeDevices DevicesInfo
+func getFreeDevices(devicesInfo device.DevicesInfo) device.DevicesInfo {
+	var freeDevices device.DevicesInfo
 
 	for _, device := range devicesInfo {
 		if !device.Reserved {
@@ -46,8 +21,8 @@ func getFreeDevices(devicesInfo DevicesInfo) DevicesInfo {
 }
 
 // getTakenDevices Get slice of all currently taken devices
-func getTakenDevices(devicesInfo DevicesInfo) DevicesInfo {
-	var takenDevices DevicesInfo
+func getTakenDevices(devicesInfo device.DevicesInfo) device.DevicesInfo {
+	var takenDevices device.DevicesInfo
 
 	for _, device := range devicesInfo {
 		if device.Reserved {
@@ -59,15 +34,15 @@ func getTakenDevices(devicesInfo DevicesInfo) DevicesInfo {
 }
 
 // getAllDevices Get a slice of all devices (copies)
-func getAllDevices(devicesInfo DevicesInfo) DevicesInfo {
-	allDevices := make(DevicesInfo, len(devicesInfo))
+func getAllDevices(devicesInfo device.DevicesInfo) device.DevicesInfo {
+	allDevices := make(device.DevicesInfo, len(devicesInfo))
 	copy(allDevices, devicesInfo)
 	return allDevices
 }
 
 // generateDeviceFreeOptionBlocks Generates option block objects for every free device
 // to be used as poll elements in modal
-func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
+func generateDeviceFreeOptionBlocks(devices device.DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getFreeDevices(devices) {
@@ -85,7 +60,7 @@ func generateDeviceFreeOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObj
 
 // generateDeviceTakenOptionBlocks Generates option block objects for every taken device
 // to be used as poll elements in modal
-func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockObject {
+func generateDeviceTakenOptionBlocks(devices device.DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getTakenDevices(devices) {
@@ -105,7 +80,7 @@ func generateDeviceTakenOptionBlocks(devices DevicesInfo) []*slack.OptionBlockOb
 }
 
 // generateDeviceInfoBlocks Generates device block objects to be used as elements in modal
-func generateDeviceInfoBlocks(devices DevicesInfo) []*slack.SectionBlock {
+func generateDeviceInfoBlocks(devices device.DevicesInfo) []*slack.SectionBlock {
 	var deviceBlocks []*slack.SectionBlock
 
 	for _, device := range devices {

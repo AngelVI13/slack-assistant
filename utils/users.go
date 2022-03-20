@@ -2,12 +2,12 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/AngelVI13/slack-assistant/handlers"
+	"github.com/AngelVI13/slack-assistant/device"
 	"log"
 	"os"
 )
 
-func GetUsers(path string) (usersList map[string]handlers.AccessRight) {
+func GetUsers(path string) (usersList map[string]device.AccessRight) {
 	fileData, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Could not read users file (%s)", path)
