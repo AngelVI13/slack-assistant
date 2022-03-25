@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"time"
 
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
@@ -130,11 +131,14 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 }
 
 func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
+	ticker := time.NewTicker(10 * time.Minute)
+
 	// Create a for loop that selects either the context cancellation or the events incomming
 	for {
 		select {
 		// inscase context cancel is called exit the goroutine
 		case <-ctx.Done():
+			ticker.Stop()
 			log.Println("Shutting down socketmode listener")
 			return
 		case event := <-dm.SlackClient.Events:
@@ -151,6 +155,11 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 				// Handle interaction events i.e. user voted in our poll etc.
 				dm.processEventInteractive(event)
 			}
+		case <-ticker.C:
+			// Auto release devices at midnight
+			//                YYYY  M  D  H  M  S  NS timezone
+			when := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+			dm.AutoRelease(when)
 		}
 	}
 }
@@ -197,6 +206,8 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
 			autoRelease := false
+			// If anything in checkbox group AutoRelease was selected (there is only 1 checkbox if to auto release or not)
+			// -> enable auto release
 			if len(interaction.View.State.Values[modals.MAutoReleaseActionId][modals.MAutoReleaseCheckboxId].SelectedOptions) > 0 {
 				autoRelease = true
 			}

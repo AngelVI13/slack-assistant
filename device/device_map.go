@@ -92,3 +92,19 @@ func (d *DevicesMap) Release(deviceName, user string) (victimId, err string) {
 	}
 	return "", ""
 }
+
+func (d *DevicesMap) AutoRelease(when time.Time) {
+	// Only release devices at the specified hour (hour is [0;23])
+	now := time.Now()
+	if now.Hour() != when.Hour() {
+		return
+	}
+
+	for _, device := range d.Devices {
+		if device.Reserved && device.AutoRelease {
+			device.Reserved = false
+			device.AutoRelease = false
+		}
+	}
+
+}
