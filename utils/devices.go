@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/AngelVI13/slack-assistant/device"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/AngelVI13/slack-assistant/device"
 )
 
 type Worker struct {
@@ -58,9 +59,11 @@ func GetDevices(path, taProjectEndpoint string) device.DevicesMap {
 
 		for _, worker := range info.Workers {
 			devicesList.Devices[device.DeviceName(worker.Name)] = &device.DeviceProps{
-				Name:     worker.Name,
-				Reserved: false,
-				Props:    worker.Properties,
+				Name: worker.Name,
+				ReservedProps: device.ReservedProps{
+					Reserved: false,
+				},
+				WorkerProps: worker.Properties,
 			}
 		}
 
