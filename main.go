@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/AngelVI13/slack-assistant/slack/handlers"
-	"github.com/AngelVI13/slack-assistant/utils"
 	"log"
 	"os"
 
+	"github.com/AngelVI13/slack-assistant/slack/handlers"
+
+	"github.com/AngelVI13/slack-assistant/utils"
 	"github.com/joho/godotenv"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
@@ -43,7 +44,11 @@ func main() {
 
 	usersFile := os.Getenv("SL_USERS_FILE")
 	users := utils.GetUsers(usersFile)
-	deviceManager := handlers.DeviceManager{devicesInfo, users, socketClient}
+	deviceManager := handlers.DeviceManager{
+		DevicesMap:  devicesInfo,
+		Users:       users,
+		SlackClient: socketClient,
+	}
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
