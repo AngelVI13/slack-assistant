@@ -3,24 +3,21 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/AngelVI13/slack-assistant/slack/modals"
-	"github.com/AngelVI13/slack-assistant/device"
 	"log"
 	"sort"
+
+	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/slack/modals"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
-const SlashShowDevices = "/show-devices"
-const SlashReserveDevice = "/reserve-device"
-const SlashReleaseDevice = "/release-device"
-
 var SlashCommands = map[string]ModalHandler{
-	SlashShowDevices:   &modals.ShowDeviceHandler{},
-	SlashReserveDevice: &modals.ReserveDeviceHandler{},
-	SlashReleaseDevice: &modals.ReleaseDeviceHandler{},
+	"/show-devices":   &modals.ShowDeviceHandler{},
+	"/reserve-device": &modals.ReserveDeviceHandler{},
+	"/release-device": &modals.ReleaseDeviceHandler{},
 }
 
 type DeviceManager struct {
