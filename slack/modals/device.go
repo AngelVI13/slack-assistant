@@ -2,10 +2,10 @@ package modals
 
 import (
 	"fmt"
-	"github.com/slack-go/slack"
-	"github.com/AngelVI13/slack-assistant/device"
-)
 
+	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/slack-go/slack"
+)
 
 // getFreeDevices Get slice of all currently free devices
 func getFreeDevices(devicesInfo device.DevicesInfo) device.DevicesInfo {
@@ -84,15 +84,20 @@ func generateDeviceInfoBlocks(devices device.DevicesInfo) []*slack.SectionBlock 
 	var deviceBlocks []*slack.SectionBlock
 
 	for _, device := range devices {
-		status := "Free"
+		status := ""
 		emoji := ":large_green_circle:"
 		if device.Reserved {
 			emoji = ":large_orange_circle:"
 			timeStr := device.ReservedTime.Format("Mon 15:04")
-			status = fmt.Sprintf("Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", device.ReservedBy, timeStr)
+			autoStatus := ""
+			if device.AutoRelease {
+				autoStatus = "\t:eject: *Auto*"
+			}
+			status = fmt.Sprintf("\n\t\t_Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", device.ReservedBy, timeStr, autoStatus)
 		}
 		deviceProps := device.GetPropsText()
-		text := fmt.Sprintf("%s *%s*\n\t\t%s\n\t\t_%s_", emoji, device.Name, deviceProps, status)
+		// Status includes the new lines
+		text := fmt.Sprintf("%s *%s*\n\t\t%s%s", emoji, device.Name, deviceProps, status)
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
 		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 
