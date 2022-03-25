@@ -13,6 +13,7 @@ type WorkerProps struct {
 
 type ReservedProps struct {
 	Reserved     bool
+	AutoRelease  bool
 	ReservedBy   string
 	ReservedById string
 	ReservedTime time.Time

@@ -1,13 +1,15 @@
 package modals
 
 import (
-	"github.com/slack-go/slack"
 	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/slack-go/slack"
 )
 
 const MReserveDeviceTitle = "Reserve Device"
 const MReserveDeviceActionId = "deviceSelected"
 const MReserveDeviceCheckboxId = "deviceCheckbox"
+const MAutoReleaseCheckboxId = "autoReleaseDeviceCheckbox"
+const MAutoReleaseActionId = "autoReleaseDeviceSelected"
 
 type ReserveDeviceHandler struct{}
 
@@ -33,11 +35,25 @@ func (h *ReserveDeviceHandler) GenerateBlocks(devices device.DevicesInfo) []slac
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReserveDeviceCheckboxId, deviceOptionBlocks...)
 	actionBlocks := slack.NewActionBlock(MReserveDeviceActionId, deviceCheckboxGroup)
 
+	// Header text
 	header := "Choose a device you would like to reserve"
 	headerText := slack.NewTextBlockObject("mrkdwn", header, false, false)
 	headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
-	// Add header text and action(poll) elem to slice of modal blocks
-	allBlocks := []slack.Block{headerSection, actionBlocks}
+	// Auto release checkbox
+	autoReleaseOptionBlocks := []*slack.OptionBlockObject{
+		slack.NewOptionBlockObject(
+			"autoRelease",
+			slack.NewTextBlockObject("mrkdwn", "Auto Release", false, false),
+			slack.NewTextBlockObject("mrkdwn", "Automatically release device/s at midnight.", false, false),
+		),
+	}
+
+	autoReleaseDeviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MAutoReleaseCheckboxId, autoReleaseOptionBlocks...)
+	autoReleaseActionBlocks := slack.NewActionBlock(MAutoReleaseActionId, autoReleaseDeviceCheckboxGroup)
+
+	divSection := slack.NewDividerBlock()
+
+	allBlocks := []slack.Block{headerSection, actionBlocks, divSection, autoReleaseActionBlocks}
 	return allBlocks
 }

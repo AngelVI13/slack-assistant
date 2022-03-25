@@ -1,11 +1,11 @@
 package device
 
 import (
-    "encoding/json"
-    "time"
-    "log"
-    "os"
-    "fmt"
+	"encoding/json"
+	"fmt"
+	"log"
+	"os"
+	"time"
 )
 
 type DeviceName string
@@ -91,4 +91,3 @@ func (d *DevicesMap) Release(deviceName, user string) (victimId, err string) {
 	}
 	return "", ""
 }
-
