@@ -196,8 +196,13 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		// NOTE: we use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
 		case modals.MReserveDeviceTitle:
+			autoRelease := false
+			if len(interaction.View.State.Values[modals.MAutoReleaseActionId][modals.MAutoReleaseCheckboxId].SelectedOptions) > 0 {
+				autoRelease = true
+			}
+
 			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				errStr := dm.Reserve(selected.Value, interaction.User.Name, interaction.User.ID)
+				errStr := dm.Reserve(selected.Value, interaction.User.Name, interaction.User.ID, autoRelease)
 				if errStr != "" {
 					log.Println(errStr)
 					// If there device was already taken -> inform user by personal DM message from the bot

@@ -55,7 +55,7 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	}
 }
 
-func (d *DevicesMap) Reserve(deviceName, user, userId string) (err string) {
+func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) (err string) {
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
@@ -64,12 +64,13 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string) (err string) {
 		reservedTime := device.ReservedTime.Format("Mon 15:04")
 		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
 	}
-	log.Printf("RESERVE: User (%s) reserved device (%s)", user, deviceName)
+	log.Printf("RESERVE: User (%s) reserved device (%s) with auto release (%v)", user, deviceName, autoRelease)
 
 	device.Reserved = true
 	device.ReservedBy = user
 	device.ReservedById = userId
 	device.ReservedTime = time.Now()
+	device.AutoRelease = autoRelease
 
 	d.SynchronizeToFile()
 	return ""
