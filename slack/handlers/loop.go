@@ -229,6 +229,13 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 					dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
 				}
 			}
+		case modals.MRestartProxyTitle:
+			deviceNames := []string{}
+			userSelection := interaction.View.State.Values[modals.MRestartProxyActionId][modals.MRestartProxyCheckboxId].SelectedOptions
+			for _, selected := range userSelection {
+				deviceNames = append(deviceNames, selected.Value)
+			}
+			dm.RestartProxies(deviceNames, interaction.User.Name)
 		default:
 		}
 	default:

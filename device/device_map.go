@@ -106,5 +106,22 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 			device.AutoRelease = false
 		}
 	}
+}
 
+func (d *DevicesMap) RestartProxies(deviceNames []string, user string) (err string) {
+	log.Printf("RESTART_PROXY: User (%s) restarted (%s) device/s.", user, deviceNames)
+	destinations := map[string][]string{}
+
+	for _, deviceName := range deviceNames {
+		device, ok := d.Devices[DeviceName(deviceName)]
+		if !ok {
+			log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
+		}
+		destinations[device.SerialProxyHost] = append(destinations[device.SerialProxyHost], deviceName)
+	}
+	log.Println(destinations)
+	// TODO: make POST request for each host/endpoint with devices that need to be restarted
+	// return to user the output of the command
+
+	return ""
 }
