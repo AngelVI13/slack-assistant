@@ -19,6 +19,7 @@ var SlashCommands = map[string]ModalHandler{
 	"/show-devices":   &modals.ShowDeviceHandler{},
 	"/reserve-device": &modals.ReserveDeviceHandler{},
 	"/release-device": &modals.ReleaseDeviceHandler{},
+	"/restart-proxy": &modals.RestartProxyHandler{},
 }
 
 type DeviceManager struct {

@@ -35,3 +35,26 @@ func (p *DeviceProps) GetPropsText() string {
 		p.DeviceSerialNumber,
 	)
 }
+
+func (p *DeviceProps) GetStatusEmoji() string {
+	emoji := ":large_green_circle:"
+	if p.Reserved {
+		emoji = ":large_orange_circle:"
+	}
+	return emoji
+}
+
+// GetStatusDescription Get device status description i.e. reserved, by who, when, etc.
+// Returns empty string if device is free
+func (p *DeviceProps) GetStatusDescription() string {
+	status := ""
+	if p.Reserved {
+		timeStr := p.ReservedTime.Format("Mon 15:04")
+		autoStatus := ""
+		if p.AutoRelease {
+			autoStatus = "\t:eject: *Auto*"
+		}
+		status = fmt.Sprintf("_Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", p.ReservedBy, timeStr, autoStatus)
+	}
+	return status
+}

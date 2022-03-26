@@ -64,14 +64,14 @@ func generateDeviceTakenOptionBlocks(devices device.DevicesInfo) []*slack.Option
 	var deviceBlocks []*slack.OptionBlockObject
 
 	for _, device := range getTakenDevices(devices) {
-		timeStr := device.ReservedTime.Format("Mon 15:04")
 		deviceProps := device.GetPropsText()
-		status := fmt.Sprintf("%s\nReserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*", deviceProps, device.ReservedBy, timeStr)
+		status := device.GetStatusDescription()
+		description := fmt.Sprintf("%s\n%s", deviceProps, status)
 
 		sectionBlock := slack.NewOptionBlockObject(
 			device.Name,
 			slack.NewTextBlockObject("mrkdwn", device.Name, false, false),
-			slack.NewTextBlockObject("mrkdwn", status, false, false),
+			slack.NewTextBlockObject("mrkdwn", description, false, false),
 		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
@@ -84,23 +84,37 @@ func generateDeviceInfoBlocks(devices device.DevicesInfo) []*slack.SectionBlock 
 	var deviceBlocks []*slack.SectionBlock
 
 	for _, device := range devices {
-		status := ""
-		emoji := ":large_green_circle:"
-		if device.Reserved {
-			emoji = ":large_orange_circle:"
-			timeStr := device.ReservedTime.Format("Mon 15:04")
-			autoStatus := ""
-			if device.AutoRelease {
-				autoStatus = "\t:eject: *Auto*"
-			}
-			status = fmt.Sprintf("\n\t\t_Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", device.ReservedBy, timeStr, autoStatus)
-		}
+		status := device.GetStatusDescription()
+		emoji := device.GetStatusEmoji()
+
 		deviceProps := device.GetPropsText()
-		// Status includes the new lines
-		text := fmt.Sprintf("%s *%s*\n\t\t%s%s", emoji, device.Name, deviceProps, status)
+		text := fmt.Sprintf("%s *%s*\n\t\t%s\n\t\t%s", emoji, device.Name, deviceProps, status)
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
 		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 
+		deviceBlocks = append(deviceBlocks, sectionBlock)
+	}
+
+	return deviceBlocks
+}
+
+// generateProxyInfoBlocks Generates device proxy block objects to be used as elements in modal
+func generateProxyInfoBlocks(devices device.DevicesInfo) []*slack.OptionBlockObject {
+	var deviceBlocks []*slack.OptionBlockObject
+
+	for _, device := range devices {
+		status := device.GetStatusDescription()
+		emoji := device.GetStatusEmoji()
+
+		deviceProps := device.GetPropsText()
+		text := fmt.Sprintf("%s\n%s", deviceProps, status)
+		optionName := fmt.Sprintf("%s %s", emoji, device.Name)
+
+		sectionBlock := slack.NewOptionBlockObject(
+			device.Name,
+			slack.NewTextBlockObject("mrkdwn", optionName, false, false),
+			slack.NewTextBlockObject("mrkdwn", text, false, false),
+		)
 		deviceBlocks = append(deviceBlocks, sectionBlock)
 	}
 
