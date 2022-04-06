@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -39,7 +40,7 @@ func main() {
 	)
 
 	devicesFile := os.Getenv("SL_DEVICES_FILE")
-	workersEndpoint := os.Getenv("SL_WORKERS_ENDPOINT")
+	workersEndpoint := fmt.Sprintf("%s/workers", os.Getenv("SL_TA_ENDPOINT"))
 	devicesInfo := utils.GetDevices(devicesFile, workersEndpoint)
 
 	usersFile := os.Getenv("SL_USERS_FILE")

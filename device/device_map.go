@@ -1,10 +1,13 @@
 package device
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -108,20 +111,43 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 	}
 }
 
-func (d *DevicesMap) RestartProxies(deviceNames []string, user string) (err string) {
+func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 	log.Printf("RESTART_PROXY: User (%s) restarted (%s) device/s.", user, deviceNames)
-	destinations := map[string][]string{}
 
+	// Check that device names selected by user are part of configured devices
+	// NOTE: this should technically never fails because the user is only showed
+	// 	 valid device names but maybe keep this check here just in case ???
 	for _, deviceName := range deviceNames {
-		device, ok := d.Devices[DeviceName(deviceName)]
+		_, ok := d.Devices[DeviceName(deviceName)]
 		if !ok {
 			log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
 		}
-		destinations[device.SerialProxyHost] = append(destinations[device.SerialProxyHost], deviceName)
 	}
-	log.Println(destinations)
-	// TODO: make POST request for each host/endpoint with devices that need to be restarted
-	// return to user the output of the command
 
+	requestBody := map[string]string{
+		"command":      "restart",
+		"device_names": strings.Join(deviceNames, ","),
+	}
+	requestBodyJson, err := json.Marshal(requestBody)
+
+	if err != nil {
+		log.Fatalf("error while marshalling request body [%v] - %v", requestBody, err)
+	}
+
+	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
+	resp, err := http.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var res map[string]interface{}
+
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	fmt.Println(res)
+	// TODO: do something with the response
+	// TODO: might have to do this POST request asyncronously cause slack is expecting
+	// configurmation at some point. Maybe send the response back to the user as a DM?
 	return ""
 }
