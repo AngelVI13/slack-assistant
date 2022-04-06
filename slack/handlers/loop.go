@@ -9,6 +9,7 @@ import (
 
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
+	"github.com/AngelVI13/slack-assistant/utils/users"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -19,13 +20,14 @@ var SlashCommands = map[string]ModalHandler{
 	"/show-devices":   &modals.ShowDeviceHandler{},
 	"/reserve-device": &modals.ReserveDeviceHandler{},
 	"/release-device": &modals.ReleaseDeviceHandler{},
-	"/restart-proxy": &modals.RestartProxyHandler{},
+	"/restart-proxy":  &modals.RestartProxyHandler{},
+	"/show-users":     &modals.ShowUsersHandler{},
 }
 
 type DeviceManager struct {
 	device.DevicesMap
 	// TODO: add possibility to extend this from slack
-	Users       map[string]device.AccessRight
+	Users       users.UserMap
 	SlackClient *socketmode.Client
 }
 
@@ -192,7 +194,13 @@ func (dm *DeviceManager) handleDeviceCommand(
 	command *slack.SlashCommand,
 	handler ModalHandler,
 ) error {
-	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+	var data any
+	if command.Command == "/show-users" {
+		data = dm.Users
+	} else {
+		data = dm.GetDevicesInfo()
+	}
+	modalRequest := handler.GenerateModalRequest(command, data)
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
