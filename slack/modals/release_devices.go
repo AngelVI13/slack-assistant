@@ -1,8 +1,10 @@
 package modals
 
 import (
-	"github.com/slack-go/slack"
+	"log"
+
 	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/slack-go/slack"
 )
 
 const MReleaseDeviceTitle = "Release Device"
@@ -11,12 +13,16 @@ const MReleaseDeviceCheckboxId = "deviceCheckbox"
 
 type ReleaseDeviceHandler struct{}
 
-func (h *ReleaseDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices device.DevicesInfo) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(devices)
+func (h *ReleaseDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MReleaseDeviceTitle, allBlocks)
 }
 
-func (h *ReleaseDeviceHandler) GenerateBlocks(devices device.DevicesInfo) []slack.Block {
+func (h *ReleaseDeviceHandler) GenerateBlocks(data any) []slack.Block {
+	devices, ok := data.(device.DevicesInfo)
+	if !ok {
+		log.Fatal("Expected DevicesInfo but got something else")
+	}
 	deviceOptionBlocks := generateDeviceTakenOptionBlocks(devices)
 
 	// If no devices are taken -> return a simple message to the user

@@ -1,6 +1,8 @@
 package modals
 
 import (
+	"log"
+
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/slack-go/slack"
 )
@@ -13,12 +15,16 @@ const MAutoReleaseActionId = "autoReleaseDeviceSelected"
 
 type ReserveDeviceHandler struct{}
 
-func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, devices device.DevicesInfo) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(devices)
+func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }
 
-func (h *ReserveDeviceHandler) GenerateBlocks(devices device.DevicesInfo) []slack.Block {
+func (h *ReserveDeviceHandler) GenerateBlocks(data any) []slack.Block {
+	devices, ok := data.(device.DevicesInfo)
+	if !ok {
+		log.Fatal("Expected DevicesInfo but got something else.")
+	}
 	deviceOptionBlocks := generateDeviceFreeOptionBlocks(devices)
 	// If no devices are taken -> return a simple message to the user
 	if len(deviceOptionBlocks) <= 0 {

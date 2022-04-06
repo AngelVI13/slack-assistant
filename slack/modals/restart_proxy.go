@@ -1,6 +1,8 @@
 package modals
 
 import (
+	"log"
+
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/slack-go/slack"
 )
@@ -16,12 +18,17 @@ const MAutoReleaseActionId = "autoReleaseDeviceSelected"
 
 type RestartProxyHandler struct{}
 
-func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, devices device.DevicesInfo) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(devices)
+func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MRestartProxyTitle, allBlocks)
 }
 
-func (h *RestartProxyHandler) GenerateBlocks(devices device.DevicesInfo) []slack.Block {
+func (h *RestartProxyHandler) GenerateBlocks(data any) []slack.Block {
+	devices, ok := data.(device.DevicesInfo)
+	if !ok {
+		log.Fatalf("Expected DevicesInfo but got %T", devices)
+	}
+
 	deviceOptionBlocks := generateProxyInfoBlocks(devices)
 	if len(deviceOptionBlocks) <= 0 {
 		return []slack.Block{
