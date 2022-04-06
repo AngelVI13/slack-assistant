@@ -11,11 +11,6 @@ const MRestartProxyTitle = "Restart Proxy"
 const MRestartProxyActionId = "proxySelected"
 const MRestartProxyCheckboxId = "proxyCheckbox"
 
-/*
-const MAutoReleaseCheckboxId = "autoReleaseDeviceCheckbox"
-const MAutoReleaseActionId = "autoReleaseDeviceSelected"
-*/
-
 type RestartProxyHandler struct{}
 
 func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
@@ -26,7 +21,7 @@ func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, 
 func (h *RestartProxyHandler) GenerateBlocks(data any) []slack.Block {
 	devices, ok := data.(device.DevicesInfo)
 	if !ok {
-		log.Fatalf("Expected DevicesInfo but got %T", devices)
+		log.Fatal("Expected DevicesInfo but got something else")
 	}
 
 	deviceOptionBlocks := generateProxyInfoBlocks(devices)
@@ -49,23 +44,6 @@ func (h *RestartProxyHandler) GenerateBlocks(data any) []slack.Block {
 	headerText := slack.NewTextBlockObject("mrkdwn", header, false, false)
 	headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
-	/*
-		// Auto release checkbox
-		autoReleaseOptionBlocks := []*slack.OptionBlockObject{
-			slack.NewOptionBlockObject(
-				"autoRelease",
-				slack.NewTextBlockObject("mrkdwn", "Auto Release", false, false),
-				slack.NewTextBlockObject("mrkdwn", "Automatically release device/s at midnight.", false, false),
-			),
-		}
-
-		autoReleaseDeviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MAutoReleaseCheckboxId, autoReleaseOptionBlocks...)
-		autoReleaseActionBlocks := slack.NewActionBlock(MAutoReleaseActionId, autoReleaseDeviceCheckboxGroup)
-
-		divSection := slack.NewDividerBlock()
-	*/
-
-	// allBlocks := []slack.Block{headerSection, actionBlocks, divSection, autoReleaseActionBlocks}
 	allBlocks := []slack.Block{headerSection, actionBlocks}
 	return allBlocks
 }
