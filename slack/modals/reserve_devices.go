@@ -56,6 +56,7 @@ func (h *ReserveDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	}
 
 	autoReleaseDeviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MAutoReleaseCheckboxId, autoReleaseOptionBlocks...)
+	autoReleaseDeviceCheckboxGroup.InitialOptions = autoReleaseOptionBlocks // Pre-selects Auto release checkbox
 	autoReleaseActionBlocks := slack.NewActionBlock(MAutoReleaseActionId, autoReleaseDeviceCheckboxGroup)
 
 	divSection := slack.NewDividerBlock()
