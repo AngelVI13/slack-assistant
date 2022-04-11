@@ -19,7 +19,7 @@ var SlashCommands = map[string]ModalHandler{
 	"/show-devices":   &modals.ShowDeviceHandler{},
 	"/reserve-device": &modals.ReserveDeviceHandler{},
 	"/release-device": &modals.ReleaseDeviceHandler{},
-	"/restart-proxy": &modals.RestartProxyHandler{},
+	"/restart-proxy":  &modals.RestartProxyHandler{},
 }
 
 type DeviceManager struct {
@@ -235,7 +235,8 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			for _, selected := range userSelection {
 				deviceNames = append(deviceNames, selected.Value)
 			}
-			dm.RestartProxies(deviceNames, interaction.User.Name)
+			cmdOutput := dm.RestartProxies(deviceNames, interaction.User.Name)
+			dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
 		default:
 		}
 	default:

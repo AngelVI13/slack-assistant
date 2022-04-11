@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -137,17 +138,32 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
 	resp, err := http.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
 
+	/* Use this to specify timeout. Also to client could be added transport for setting up proxy
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	*/
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Sprintf("Restart proxy POST request to TA_ENDPOINT failed: err=%+v", err)
 	}
 
-	var res map[string]interface{}
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Sprintf("Could not read response body from restart proxy POST req: err=%+v", err)
+	}
 
-	json.NewDecoder(resp.Body).Decode(&res)
-
-	fmt.Println(res)
-	// TODO: do something with the response
+	cmdOutput := jsonPrettyPrint(responseBody)
+	cmdOutput = fmt.Sprintf("```%s```", cmdOutput) // Display cmdOutput as code block for better readability
 	// TODO: might have to do this POST request asyncronously cause slack is expecting
 	// configurmation at some point. Maybe send the response back to the user as a DM?
-	return ""
+	return cmdOutput
+}
+
+func jsonPrettyPrint(in []byte) string {
+	var out bytes.Buffer
+	err := json.Indent(&out, in, "", "\t")
+	if err != nil {
+		return string(in)
+	}
+	return out.String()
 }
