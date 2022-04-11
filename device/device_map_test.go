@@ -5,7 +5,6 @@ import (
 )
 
 func TestNewDevicesMapFromJson(t *testing.T) {
-
 	json_input := []byte(`
             {
                 "Devices":{
