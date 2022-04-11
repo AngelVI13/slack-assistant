@@ -135,14 +135,14 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 		log.Fatalf("error while marshalling request body [%v] - %v", requestBody, err)
 	}
 
-	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
-	resp, err := http.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
-
-	/* Use this to specify timeout. Also to client could be added transport for setting up proxy
+	// Specify timeout.
+	// TODO: Investigate adding transport to client for setting up proxy
 	client := http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 2 * time.Second,
 	}
-	*/
+	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
+	resp, err := client.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
+
 	if err != nil {
 		return fmt.Sprintf("Restart proxy POST request to TA_ENDPOINT failed: err=%+v", err)
 	}
