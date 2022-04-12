@@ -110,6 +110,9 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 			device.AutoRelease = false
 		}
 	}
+
+	// Need to synchronize changes from file otherwise the state won't be preserved after restart
+	d.SynchronizeToFile()
 }
 
 func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
