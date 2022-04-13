@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -16,6 +17,16 @@ import (
 
 func main() {
 	// examples taken from: https://towardsdatascience.com/develop-a-slack-bot-using-golang-1025b3e606bc
+
+	// Configure logger
+	logFile, err := os.OpenFile("./slack-assistant.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening log file: %v", err)
+	}
+	defer logFile.Close()
+
+	wrt := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(wrt)
 
 	// Load Env variables from .dot file
 	godotenv.Load(".env")
