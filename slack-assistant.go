@@ -40,14 +40,18 @@ func main() {
 	}
 
 	// Create a new client to slack
-	client := slack.New(token, slack.OptionDebug(debug), slack.OptionAppLevelToken(appToken))
+	client := slack.New(
+		token,
+		slack.OptionDebug(debug),
+		slack.OptionLog(log.New(wrt, "client: ", log.Lshortfile|log.LstdFlags)), slack.OptionAppLevelToken(appToken),
+	)
 
 	// Convert simple slack client to socket mode client
 	socketClient := socketmode.New(
 		client,
 		socketmode.OptionDebug(debug),
 		// Option to set a custom logger
-		socketmode.OptionLog(log.New(os.Stdout, "socketmode: ", log.Lshortfile|log.LstdFlags)),
+		socketmode.OptionLog(log.New(wrt, "socketmode: ", log.Lshortfile|log.LstdFlags)),
 	)
 
 	devicesFile := os.Getenv("SL_DEVICES_FILE")
