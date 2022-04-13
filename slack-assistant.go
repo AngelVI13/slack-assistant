@@ -43,7 +43,8 @@ func main() {
 	client := slack.New(
 		token,
 		slack.OptionDebug(debug),
-		slack.OptionLog(log.New(wrt, "client: ", log.Lshortfile|log.LstdFlags)), slack.OptionAppLevelToken(appToken),
+		slack.OptionLog(log.New(wrt, "client: ", log.Lshortfile|log.LstdFlags)),
+		slack.OptionAppLevelToken(appToken),
 	)
 
 	// Convert simple slack client to socket mode client
