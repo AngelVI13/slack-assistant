@@ -13,7 +13,7 @@ const MRestartProxyCheckboxId = "proxyCheckbox"
 
 type RestartProxyHandler struct{}
 
-func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+func (h *RestartProxyHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MRestartProxyTitle, allBlocks)
 }

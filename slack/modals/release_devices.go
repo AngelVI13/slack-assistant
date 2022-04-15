@@ -13,7 +13,7 @@ const MReleaseDeviceCheckboxId = "deviceCheckbox"
 
 type ReleaseDeviceHandler struct{}
 
-func (h *ReleaseDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+func (h *ReleaseDeviceHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MReleaseDeviceTitle, allBlocks)
 }
@@ -47,4 +47,7 @@ func (h *ReleaseDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	// Add header text and action(poll) elem to slice of modal blocks
 	allBlocks := []slack.Block{headerSection, actionBlocks}
 	return allBlocks
+}
+
+func (h *ReleaseDeviceHandler) ChangeAction(action string) {
 }

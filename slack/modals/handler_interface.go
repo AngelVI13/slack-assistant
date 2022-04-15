@@ -1,10 +1,11 @@
-package handlers
+package modals
 
 import (
 	"github.com/slack-go/slack"
 )
 
 type ModalHandler interface {
-	GenerateModalRequest(*slack.SlashCommand, any) slack.ModalViewRequest
+	GenerateModalRequest(any) slack.ModalViewRequest
 	GenerateBlocks(any) []slack.Block
+	ChangeAction(action string)
 }

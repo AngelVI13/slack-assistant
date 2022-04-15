@@ -15,7 +15,7 @@ const MAutoReleaseActionId = "autoReleaseDeviceSelected"
 
 type ReserveDeviceHandler struct{}
 
-func (h *ReserveDeviceHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+func (h *ReserveDeviceHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MReserveDeviceTitle, allBlocks)
 }
@@ -63,4 +63,7 @@ func (h *ReserveDeviceHandler) GenerateBlocks(data any) []slack.Block {
 
 	allBlocks := []slack.Block{headerSection, actionBlocks, divSection, autoReleaseActionBlocks}
 	return allBlocks
+}
+
+func (h *ReserveDeviceHandler) ChangeAction(action string) {
 }

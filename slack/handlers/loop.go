@@ -15,18 +15,19 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
-var SlashCommands = map[string]ModalHandler{
-	"/show-devices":   &modals.ShowDeviceHandler{},
-	"/reserve-device": &modals.ReserveDeviceHandler{},
-	"/release-device": &modals.ReleaseDeviceHandler{},
-	"/restart-proxy":  &modals.RestartProxyHandler{},
+var SlashCommands = map[string]modals.ModalHandler{
+	// TODO: This is always pointing to the same object. In general its no problem but now
+	// the DeviceHandler keeps a current modal state and if you repeat the command you get shown
+	// the last selected command from before
+	"/test-devices": modals.NewDeviceHandler(),
 }
 
 type DeviceManager struct {
 	device.DevicesMap
 	// TODO: add possibility to extend this from slack
-	Users       map[string]device.AccessRight
-	SlackClient *socketmode.Client
+	Users               map[string]device.AccessRight
+	SlackClient         *socketmode.Client
+	CurrentModalHandler modals.ModalHandler
 }
 
 func (dm *DeviceManager) GetDevicesInfo() device.DevicesInfo {
@@ -190,9 +191,10 @@ func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
 
 func (dm *DeviceManager) handleDeviceCommand(
 	command *slack.SlashCommand,
-	handler ModalHandler,
+	handler modals.ModalHandler,
 ) error {
-	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+	dm.CurrentModalHandler = handler
+	modalRequest := handler.GenerateModalRequest(dm.GetDevicesInfo())
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
@@ -238,6 +240,19 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			cmdOutput := dm.RestartProxies(deviceNames, interaction.User.Name)
 			dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
 		default:
+		}
+
+	case slack.InteractionTypeBlockActions:
+		switch interaction.View.Title.Text {
+		case modals.MDeviceTitle:
+			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
+
+			dm.CurrentModalHandler.ChangeAction(option)
+			updatedView := dm.CurrentModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
+			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	default:
 
