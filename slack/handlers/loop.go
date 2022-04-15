@@ -209,6 +209,7 @@ func (dm *DeviceManager) handleDeviceCommand(
 }
 
 func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCallback) error {
+	log.Println(interaction)
 	switch interaction.Type {
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we use title text to determine which modal was submitted
@@ -245,6 +246,34 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			}
 			dm.RestartProxies(deviceNames, interaction.User.Name)
 		default:
+		}
+	case slack.InteractionTypeBlockActions:
+		switch interaction.View.Title.Text {
+		case modals.MShowUsersTitle:
+			a := interaction.View.State.Values[modals.MShowUsersActionId][modals.MShowUsersOptionId].SelectedOption.Value
+			/*
+				var view slack.ModalViewRequest
+				switch a {
+				case "option1":
+					view = modals.UpdateModalRequest1()
+				case "option2":
+					view = modals.UpdateModalRequest2()
+				default:
+				}
+			*/
+			/*
+				handlers := map[string]func() slack.ModalViewRequest{
+					"option1": modals.UpdateModalRequest1,
+					"option2": modals.UpdateModalRequest2,
+				}
+
+				handler, ok := handlers[a]
+				if !ok {
+					log.Fatalf("Couldn't find handler for %s", a)
+				}
+				view := handler()
+				dm.SlackClient.UpdateView(view, "", "", interaction.View.ID)
+			*/
 		}
 	default:
 
