@@ -27,7 +27,7 @@ type DeviceManager struct {
 	// TODO: add possibility to extend this from slack
 	Users       map[string]device.AccessRight
 	SlackClient *socketmode.Client
-	// Whenever we are dealing with a modal that contains an state switching option
+	// Whenever we are dealing with a modal that contains a state switching option
 	// keep a pointer to it so we can change states
 	CurrentOptionModalHandler modals.OptionModalHandler
 }
@@ -172,8 +172,8 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 // Crashes in case the slack client could not open model view
 func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
 	handler := &modals.UnauthorizedHandler{}
-	// TODO: generalize GenerateModalRequest to accept variadic arguments and just do casting wherever needed
 	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		log.Fatalf("Error opening view: %s", err)
