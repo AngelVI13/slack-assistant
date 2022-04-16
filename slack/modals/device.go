@@ -87,14 +87,18 @@ func (h *DeviceHandler) GenerateBlocks(data any) []slack.Block {
 		optionBlocks = append(optionBlocks, optionBlock)
 	}
 
-	label1 := slack.NewTextBlockObject("plain_text", "Select", false, false)
-	placeholder1 := slack.NewTextBlockObject("plain_text", "Select", false, false)
-	optionGroupBlockObject := slack.NewOptionGroupBlockElement(label1, optionBlocks...)
-	newOptionsGroupSelectBlockElement := slack.NewOptionsGroupSelectBlockElement("static_select", placeholder1, MDeviceOptionId, optionGroupBlockObject)
+	// Text shown as title when option box is opened/expanded
+	optionLabel := slack.NewTextBlockObject("plain_text", "Action to perform", false, false)
+	// Default option shown for option box
+	defaultOption := slack.NewTextBlockObject("plain_text", string(defaultAction), false, false)
+
+	optionGroupBlockObject := slack.NewOptionGroupBlockElement(optionLabel, optionBlocks...)
+	newOptionsGroupSelectBlockElement := slack.NewOptionsGroupSelectBlockElement("static_select", defaultOption, MDeviceOptionId, optionGroupBlockObject)
 
 	actionBlock := slack.NewActionBlock(MDeviceActionId, newOptionsGroupSelectBlockElement)
-	allBlocks = append(allBlocks, actionBlock)
+	allBlocks = append(allBlocks, actionBlock, slack.NewDividerBlock())
 
+	// Actual modal blocks
 	action, ok := deviceModalHandlers[h.selectedAction]
 	if !ok {
 		log.Fatalf("No such device action exists %s", h.selectedAction)

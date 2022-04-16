@@ -35,6 +35,8 @@ func (h *ReleaseDeviceHandler) GenerateBlocks(data any) []slack.Block {
 			),
 		}
 	}
+	// TODO: sort devices starting from devices I have reserved first
+	//       so i don't have to search in the list which ones are mine
 
 	// Turn device blocks to a poll/action element block
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MReleaseDeviceCheckboxId, deviceOptionBlocks...)

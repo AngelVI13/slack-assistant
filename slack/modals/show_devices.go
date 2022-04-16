@@ -25,6 +25,7 @@ func (h *ShowDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	}
 	deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
+	// TODO: add reserve button to available devices and remove "reserve" action
 	var allBlocks []slack.Block
 	for idx, device := range deviceSectionBlocks {
 		divSection := slack.NewDividerBlock()
