@@ -11,29 +11,45 @@ const MDeviceTitle = "Devices"
 const MDeviceActionId = "devicesActionId"
 const MDeviceOptionId = "devicesOptionId"
 
-var DeviceModalHandlers = map[string]ModalHandler{
-	"show":    &ShowDeviceHandler{},
-	"reserve": &ReserveDeviceHandler{},
-	"release": &ReleaseDeviceHandler{},
+type ModalAction string
+
+const (
+	ShowDevicesAction    ModalAction = "show"
+	ReserveDevicesAction ModalAction = "reserve"
+	ReleaseDevicesAction ModalAction = "release"
+
+	// Default
+	DefaultAction ModalAction = ShowDevicesAction
+)
+
+var DeviceModalHandlers = map[ModalAction]ModalHandler{
+	ShowDevicesAction:    &ShowDeviceHandler{},
+	ReserveDevicesAction: &ReserveDeviceHandler{},
+	ReleaseDevicesAction: &ReleaseDeviceHandler{},
 }
 
 type DeviceHandler struct {
-	selectedAction string
+	selectedAction ModalAction
 }
 
 func NewDeviceHandler() *DeviceHandler {
 	return &DeviceHandler{
-		selectedAction: "show",
+		selectedAction: ShowDevicesAction,
 	}
 }
 
 func (h *DeviceHandler) ChangeAction(action string) {
-	_, ok := DeviceModalHandlers[action]
+	modalAction := ModalAction(action)
+	_, ok := DeviceModalHandlers[modalAction]
 	if !ok {
 		log.Fatalf("No such device action exists %s", action)
 
 	}
-	h.selectedAction = action
+	h.selectedAction = modalAction
+}
+
+func (h *DeviceHandler) Reset() {
+	h.selectedAction = DefaultAction
 }
 
 func (h *DeviceHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
@@ -53,9 +69,10 @@ func (h *DeviceHandler) GenerateBlocks(data any) []slack.Block {
 	var optionBlocks []*slack.OptionBlockObject
 
 	for option := range DeviceModalHandlers {
+		optionText := string(option)
 		optionBlock := slack.NewOptionBlockObject(
-			option,
-			slack.NewTextBlockObject("plain_text", option, false, false),
+			optionText,
+			slack.NewTextBlockObject("plain_text", optionText, false, false),
 			slack.NewTextBlockObject("plain_text", "description1", false, false),
 		)
 		optionBlocks = append(optionBlocks, optionBlock)

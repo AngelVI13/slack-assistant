@@ -25,9 +25,11 @@ var SlashCommands = map[string]modals.ModalHandler{
 type DeviceManager struct {
 	device.DevicesMap
 	// TODO: add possibility to extend this from slack
-	Users               map[string]device.AccessRight
-	SlackClient         *socketmode.Client
-	CurrentModalHandler modals.ModalHandler
+	Users       map[string]device.AccessRight
+	SlackClient *socketmode.Client
+	// Whenever we are dealing with a modal that contains an state switching option
+	// keep a pointer to it so we can change states
+	CurrentOptionModalHandler modals.OptionModalHandler
 }
 
 func (dm *DeviceManager) GetDevicesInfo() device.DevicesInfo {
@@ -193,7 +195,16 @@ func (dm *DeviceManager) handleDeviceCommand(
 	command *slack.SlashCommand,
 	handler modals.ModalHandler,
 ) error {
-	dm.CurrentModalHandler = handler
+	// In case we are dealing with an OptionModalHandler save pointer to it
+	// so we can change its state when needed
+	optionHandler, ok := handler.(modals.OptionModalHandler)
+	if ok {
+		dm.CurrentOptionModalHandler = optionHandler
+		dm.CurrentOptionModalHandler.Reset()
+	} else {
+		dm.CurrentOptionModalHandler = nil
+	}
+
 	modalRequest := handler.GenerateModalRequest(dm.GetDevicesInfo())
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
@@ -247,8 +258,12 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 		case modals.MDeviceTitle:
 			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
 
-			dm.CurrentModalHandler.ChangeAction(option)
-			updatedView := dm.CurrentModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
+			if dm.CurrentOptionModalHandler == nil {
+				log.Fatalf("Can't update state of modal because no OptionModalHandler was saved")
+			}
+
+			dm.CurrentOptionModalHandler.ChangeAction(option)
+			updatedView := dm.CurrentOptionModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
 			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)

@@ -37,6 +37,3 @@ func (h *ShowDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	}
 	return allBlocks
 }
-
-func (h *ShowDeviceHandler) ChangeAction(action string) {
-}

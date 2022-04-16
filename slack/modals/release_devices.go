@@ -48,6 +48,3 @@ func (h *ReleaseDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	allBlocks := []slack.Block{headerSection, actionBlocks}
 	return allBlocks
 }
-
-func (h *ReleaseDeviceHandler) ChangeAction(action string) {
-}

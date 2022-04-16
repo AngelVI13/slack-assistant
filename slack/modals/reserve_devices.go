@@ -64,6 +64,3 @@ func (h *ReserveDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	allBlocks := []slack.Block{headerSection, actionBlocks, divSection, autoReleaseActionBlocks}
 	return allBlocks
 }
-
-func (h *ReserveDeviceHandler) ChangeAction(action string) {
-}
