@@ -80,9 +80,10 @@ func generateDeviceTakenOptionBlocks(devices device.DevicesInfo) []*slack.Option
 }
 
 // generateDeviceInfoBlocks Generates device block objects to be used as elements in modal
-func generateDeviceInfoBlocks(devices device.DevicesInfo) []*slack.SectionBlock {
-	var deviceBlocks []*slack.SectionBlock
+func generateDeviceInfoBlocks(devices device.DevicesInfo) []slack.Block {
+	div := slack.NewDividerBlock()
 
+	var deviceBlocks []slack.Block
 	for _, device := range devices {
 		status := device.GetStatusDescription()
 		emoji := device.GetStatusEmoji()
@@ -92,7 +93,17 @@ func generateDeviceInfoBlocks(devices device.DevicesInfo) []*slack.SectionBlock 
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
 		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 
-		deviceBlocks = append(deviceBlocks, sectionBlock)
+		actionButtonText := "Reserve!"
+		actionButtonStyle := slack.StylePrimary
+		if device.Reserved {
+			actionButtonText = "Release!"
+			actionButtonStyle = slack.StyleDanger
+		}
+		reserveButton := slack.NewButtonBlockElement("", device.Name, slack.NewTextBlockObject("plain_text", actionButtonText, true, false))
+		reserveButton = reserveButton.WithStyle(actionButtonStyle)
+		reserveAction := slack.NewActionBlock("", reserveButton)
+
+		deviceBlocks = append(deviceBlocks, sectionBlock, reserveAction, div)
 	}
 
 	return deviceBlocks

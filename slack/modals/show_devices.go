@@ -25,16 +25,10 @@ func (h *ShowDeviceHandler) GenerateBlocks(data any) []slack.Block {
 	}
 	deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
-	// TODO: add reserve button to available devices and remove "reserve" action
-	var allBlocks []slack.Block
-	for idx, device := range deviceSectionBlocks {
-		divSection := slack.NewDividerBlock()
-		allBlocks = append(allBlocks, device)
-
-		// do not add separator after last element
-		if idx < len(deviceSectionBlocks)-1 {
-			allBlocks = append(allBlocks, divSection)
-		}
-	}
+	// TODO: 1. remove Reserve and Release device modals cause now everything can be done via ShowDeviceModal
+	// 2. which should also be renamed to Devices or sth
+	// 3. Also remove the devices from the OptionModal
+	// 4. Also connect the button logic to do something
+	allBlocks := deviceSectionBlocks
 	return allBlocks
 }
