@@ -218,6 +218,7 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
+		// TODO: the following Reserve/Release device cases are no longer needed. Completely remove the following logic + their respective ModalHandlers
 		case modals.MReserveDeviceTitle:
 			autoRelease := false
 			// If anything in checkbox group AutoRelease was selected (there is only 1 checkbox if to auto release or not)
@@ -256,13 +257,44 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	case slack.InteractionTypeBlockActions:
 		switch interaction.View.Title.Text {
 		case modals.MDeviceTitle:
-			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
-
 			if dm.CurrentOptionModalHandler == nil {
-				log.Fatalf("Can't update state of modal because no OptionModalHandler was saved")
+				log.Fatalf(
+					`Did not have a valid pointer to OptionModal,
+        				please make sure to close any open modals before restarting the bot`,
+				)
 			}
 
-			dm.CurrentOptionModalHandler.ChangeAction(option)
+			// Update option view if new option was chosen
+			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
+			if option != "" {
+				dm.CurrentOptionModalHandler.ChangeAction(option)
+			}
+
+			// handle button actions
+			for _, action := range interaction.ActionCallback.BlockActions {
+				// TODO replace these strings with constants
+				switch action.ActionID {
+				case "reserve", "withAuto":
+
+					autoRelease := action.ActionID == "withAuto"
+					errStr := dm.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
+					if errStr != "" {
+						log.Println(errStr)
+						// If there device was already taken -> inform user by personal DM message from the bot
+						dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
+					}
+				case "release":
+					victimId, errStr := dm.Release(action.Value, interaction.User.Name)
+					if victimId != "" {
+						log.Println(errStr)
+						dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+					}
+				default:
+					log.Fatalf("Unknown button pressed: %s", action.ActionID)
+				}
+			}
+
+			// update modal view to display changes
 			updatedView := dm.CurrentOptionModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
 			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {

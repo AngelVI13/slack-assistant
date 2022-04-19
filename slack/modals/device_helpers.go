@@ -93,17 +93,33 @@ func generateDeviceInfoBlocks(devices device.DevicesInfo) []slack.Block {
 		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
 		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
 
-		actionButtonText := "Reserve!"
-		actionButtonStyle := slack.StylePrimary
-		if device.Reserved {
-			actionButtonText = "Release!"
-			actionButtonStyle = slack.StyleDanger
-		}
-		reserveButton := slack.NewButtonBlockElement("", device.Name, slack.NewTextBlockObject("plain_text", actionButtonText, true, false))
-		reserveButton = reserveButton.WithStyle(actionButtonStyle)
-		reserveAction := slack.NewActionBlock("", reserveButton)
+		var buttons []slack.BlockElement
 
-		deviceBlocks = append(deviceBlocks, sectionBlock, reserveAction, div)
+		if device.Reserved {
+			reserveWithAutoButton := slack.NewButtonBlockElement(
+				"release",
+				device.Name,
+				slack.NewTextBlockObject("plain_text", "Release!", true, false),
+			)
+			reserveWithAutoButton = reserveWithAutoButton.WithStyle(slack.StyleDanger)
+			buttons = append(buttons, reserveWithAutoButton)
+		} else {
+
+			actionButtonText := "Reserve!"
+			reserveWithAutoButton := slack.NewButtonBlockElement(
+				"withAuto",
+				device.Name,
+				slack.NewTextBlockObject("plain_text", fmt.Sprintf("%s :eject:", actionButtonText), true, false),
+			)
+			reserveWithAutoButton = reserveWithAutoButton.WithStyle(slack.StylePrimary)
+			buttons = append(buttons, reserveWithAutoButton)
+
+			reserveButton := slack.NewButtonBlockElement("reserve", device.Name, slack.NewTextBlockObject("plain_text", actionButtonText, true, false))
+			buttons = append(buttons, reserveButton)
+		}
+
+		actions := slack.NewActionBlock("", buttons...)
+		deviceBlocks = append(deviceBlocks, sectionBlock, actions, div)
 	}
 
 	return deviceBlocks
