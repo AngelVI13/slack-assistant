@@ -20,7 +20,6 @@ type DeviceBookingHandler struct{}
 
 func (h *DeviceBookingHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
-	// TODO: change modal button to OK instead of submit
 	return generateInfoModalRequest(MDeviceBookingTitle, allBlocks)
 }
 

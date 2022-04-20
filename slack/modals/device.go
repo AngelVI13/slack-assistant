@@ -17,12 +17,6 @@ var DeviceActionMap = map[ModalAction]ModalData{
 		handler:     &DeviceBookingHandler{},
 		description: "Reserve/Release devices",
 	},
-	/* //TODO: delete this
-	restartdevicesAction: {
-		handler:     &RestartProxyHandler{},
-		description: "Restart proxy for selected devices",
-	},
-	*/
 }
 
 var DeviceModalInfo = ModalInfo{

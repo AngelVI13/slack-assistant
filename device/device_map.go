@@ -159,8 +159,7 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 
 	cmdOutput := jsonPrettyPrint(responseBody)
 	cmdOutput = fmt.Sprintf("```%s```", cmdOutput) // Display cmdOutput as code block for better readability
-	// TODO: might have to do this POST request asyncronously cause slack is expecting
-	// configurmation at some point. Maybe send the response back to the user as a DM?
+
 	return cmdOutput
 }
 
