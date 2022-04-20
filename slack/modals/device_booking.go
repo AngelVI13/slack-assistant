@@ -31,9 +31,6 @@ func (h *DeviceBookingHandler) GenerateBlocks(data any) []slack.Block {
 	}
 	deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
-	// TODO: 1. remove Reserve and Release device modals cause now everything can be done via DeviceBookingModal
-	// 2. which should also be renamed to Devices or sth
-	// 3. Also remove the devices from the OptionModal
 	allBlocks := deviceSectionBlocks
 	return allBlocks
 }
