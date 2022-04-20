@@ -16,8 +16,12 @@ import (
 )
 
 var SlashCommands = map[string]modals.ModalHandler{
-	"/test-devices": modals.NewCustomOptionModalHandler(modals.DeviceActionMap, modals.DefaultDeviceAction, modals.DeviceModalInfo),
-	"/test-res-pxy": &modals.RestartProxyHandler{},
+	"/devices": modals.NewCustomOptionModalHandler(
+		modals.DeviceActionMap,
+		modals.DefaultDeviceAction,
+		modals.DeviceModalInfo,
+	),
+	"/restart-proxy": &modals.RestartProxyHandler{},
 }
 
 type DeviceManager struct {
