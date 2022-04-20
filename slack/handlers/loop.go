@@ -16,10 +16,8 @@ import (
 )
 
 var SlashCommands = map[string]modals.ModalHandler{
-	// TODO: This is always pointing to the same object. In general its no problem but now
-	// the DeviceHandler keeps a current modal state and if you repeat the command you get shown
-	// the last selected command from before
-	"/test-devices": modals.NewDeviceHandler(),
+	"/test-devices": modals.NewCustomOptionModalHandler(modals.DeviceActionMap, modals.DefaultDeviceAction, modals.DeviceModalInfo),
+	"/test-res-pxy": &modals.RestartProxyHandler{},
 }
 
 type DeviceManager struct {
@@ -241,13 +239,10 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 
 			// Update option view if new option was chosen
 			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
-			if option != "" {
-				dm.CurrentOptionModalHandler.ChangeAction(option)
-			}
+			dm.CurrentOptionModalHandler.ChangeAction(option)
 
 			// handle button actions
 			for _, action := range interaction.ActionCallback.BlockActions {
-				// TODO replace these strings with constants
 				switch action.ActionID {
 				case modals.ReserveDeviceActionId, modals.ReserveWithAutoActionId:
 
@@ -265,7 +260,6 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 						dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
 					}
 				default:
-					log.Fatalf("Unknown button pressed: %s", action.ActionID)
 				}
 			}
 

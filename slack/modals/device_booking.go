@@ -9,33 +9,31 @@ import (
 )
 
 const (
-	MShowDeviceTitle      = "Device Status"
-	MShowDeviceActionId   = "deviceSelected"
-	MShowDeviceCheckboxId = "deviceCheckbox"
+	MDeviceBookingTitle = "Device Booking"
 
 	ReserveDeviceActionId   = "reserve"
 	ReserveWithAutoActionId = "withAuto"
 	ReleaseDeviceActionId   = "release"
 )
 
-type ShowDeviceHandler struct{}
+type DeviceBookingHandler struct{}
 
-func (h *ShowDeviceHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
+func (h *DeviceBookingHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
-	return generateInfoModalRequest(MShowDeviceTitle, allBlocks)
+	// TODO: change modal button to OK instead of submit
+	return generateInfoModalRequest(MDeviceBookingTitle, allBlocks)
 }
 
-func (h *ShowDeviceHandler) GenerateBlocks(data any) []slack.Block {
+func (h *DeviceBookingHandler) GenerateBlocks(data any) []slack.Block {
 	devices, ok := data.(device.DevicesInfo)
 	if !ok {
 		log.Fatal("Expected DevicesInfo but got something else")
 	}
 	deviceSectionBlocks := generateDeviceInfoBlocks(devices)
 
-	// TODO: 1. remove Reserve and Release device modals cause now everything can be done via ShowDeviceModal
+	// TODO: 1. remove Reserve and Release device modals cause now everything can be done via DeviceBookingModal
 	// 2. which should also be renamed to Devices or sth
 	// 3. Also remove the devices from the OptionModal
-	// 4. Also connect the button logic to do something
 	allBlocks := deviceSectionBlocks
 	return allBlocks
 }

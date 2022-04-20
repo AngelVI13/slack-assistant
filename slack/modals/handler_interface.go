@@ -12,7 +12,7 @@ type (
 
 	OptionModalHandler interface {
 		ModalHandler
-		ChangeAction(action string)
+		ChangeAction(action string) bool
 		Reset()
 	}
 )
