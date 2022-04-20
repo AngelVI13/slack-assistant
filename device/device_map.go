@@ -64,7 +64,9 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) 
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
 	}
-	if device.Reserved {
+	// Only inform user if it was someone else that tried to reserved his device.
+	// This prevents an unnecessary message if you double clicked the reserve button yourself
+	if device.Reserved && device.ReservedById != userId {
 		reservedTime := device.ReservedTime.Format("Mon 15:04")
 		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
 	}
@@ -157,8 +159,7 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 
 	cmdOutput := jsonPrettyPrint(responseBody)
 	cmdOutput = fmt.Sprintf("```%s```", cmdOutput) // Display cmdOutput as code block for better readability
-	// TODO: might have to do this POST request asyncronously cause slack is expecting
-	// configurmation at some point. Maybe send the response back to the user as a DM?
+
 	return cmdOutput
 }
 

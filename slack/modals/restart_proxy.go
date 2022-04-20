@@ -1,6 +1,7 @@
 package modals
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/AngelVI13/slack-assistant/device"
@@ -13,7 +14,7 @@ const MRestartProxyCheckboxId = "proxyCheckbox"
 
 type RestartProxyHandler struct{}
 
-func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+func (h *RestartProxyHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
 	return generateModalRequest(MRestartProxyTitle, allBlocks)
 }
@@ -46,4 +47,27 @@ func (h *RestartProxyHandler) GenerateBlocks(data any) []slack.Block {
 
 	allBlocks := []slack.Block{headerSection, actionBlocks}
 	return allBlocks
+}
+
+// generateProxyInfoBlocks Generates device proxy block objects to be used as elements in modal
+func generateProxyInfoBlocks(devices device.DevicesInfo) []*slack.OptionBlockObject {
+	var deviceBlocks []*slack.OptionBlockObject
+
+	for _, device := range devices {
+		status := device.GetStatusDescription()
+		emoji := device.GetStatusEmoji()
+
+		deviceProps := device.GetPropsText()
+		text := fmt.Sprintf("%s\n%s", deviceProps, status)
+		optionName := fmt.Sprintf("%s %s", emoji, device.Name)
+
+		sectionBlock := slack.NewOptionBlockObject(
+			device.Name,
+			slack.NewTextBlockObject("mrkdwn", optionName, false, false),
+			slack.NewTextBlockObject("mrkdwn", text, false, false),
+		)
+		deviceBlocks = append(deviceBlocks, sectionBlock)
+	}
+
+	return deviceBlocks
 }
