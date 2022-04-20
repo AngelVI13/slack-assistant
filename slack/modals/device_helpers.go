@@ -79,52 +79,6 @@ func generateDeviceTakenOptionBlocks(devices device.DevicesInfo) []*slack.Option
 	return deviceBlocks
 }
 
-// generateDeviceInfoBlocks Generates device block objects to be used as elements in modal
-func generateDeviceInfoBlocks(devices device.DevicesInfo) []slack.Block {
-	div := slack.NewDividerBlock()
-
-	var deviceBlocks []slack.Block
-	for _, device := range devices {
-		status := device.GetStatusDescription()
-		emoji := device.GetStatusEmoji()
-
-		deviceProps := device.GetPropsText()
-		text := fmt.Sprintf("%s *%s*\n\t\t%s\n\t\t%s", emoji, device.Name, deviceProps, status)
-		sectionText := slack.NewTextBlockObject("mrkdwn", text, false, false)
-		sectionBlock := slack.NewSectionBlock(sectionText, nil, nil)
-
-		var buttons []slack.BlockElement
-
-		if device.Reserved {
-			reserveWithAutoButton := slack.NewButtonBlockElement(
-				"release",
-				device.Name,
-				slack.NewTextBlockObject("plain_text", "Release!", true, false),
-			)
-			reserveWithAutoButton = reserveWithAutoButton.WithStyle(slack.StyleDanger)
-			buttons = append(buttons, reserveWithAutoButton)
-		} else {
-
-			actionButtonText := "Reserve!"
-			reserveWithAutoButton := slack.NewButtonBlockElement(
-				"withAuto",
-				device.Name,
-				slack.NewTextBlockObject("plain_text", fmt.Sprintf("%s :eject:", actionButtonText), true, false),
-			)
-			reserveWithAutoButton = reserveWithAutoButton.WithStyle(slack.StylePrimary)
-			buttons = append(buttons, reserveWithAutoButton)
-
-			reserveButton := slack.NewButtonBlockElement("reserve", device.Name, slack.NewTextBlockObject("plain_text", actionButtonText, true, false))
-			buttons = append(buttons, reserveButton)
-		}
-
-		actions := slack.NewActionBlock("", buttons...)
-		deviceBlocks = append(deviceBlocks, sectionBlock, actions, div)
-	}
-
-	return deviceBlocks
-}
-
 // generateProxyInfoBlocks Generates device proxy block objects to be used as elements in modal
 func generateProxyInfoBlocks(devices device.DevicesInfo) []*slack.OptionBlockObject {
 	var deviceBlocks []*slack.OptionBlockObject

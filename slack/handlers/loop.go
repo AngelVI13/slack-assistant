@@ -218,31 +218,6 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
-		// TODO: the following Reserve/Release device cases are no longer needed. Completely remove the following logic + their respective ModalHandlers
-		case modals.MReserveDeviceTitle:
-			autoRelease := false
-			// If anything in checkbox group AutoRelease was selected (there is only 1 checkbox if to auto release or not)
-			// -> enable auto release
-			if len(interaction.View.State.Values[modals.MAutoReleaseActionId][modals.MAutoReleaseCheckboxId].SelectedOptions) > 0 {
-				autoRelease = true
-			}
-
-			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				errStr := dm.Reserve(selected.Value, interaction.User.Name, interaction.User.ID, autoRelease)
-				if errStr != "" {
-					log.Println(errStr)
-					// If there device was already taken -> inform user by personal DM message from the bot
-					dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
-				}
-			}
-		case modals.MReleaseDeviceTitle:
-			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
-				victimId, errStr := dm.Release(selected.Value, interaction.User.Name)
-				if victimId != "" {
-					log.Println(errStr)
-					dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
-				}
-			}
 		case modals.MRestartProxyTitle:
 			deviceNames := []string{}
 			userSelection := interaction.View.State.Values[modals.MRestartProxyActionId][modals.MRestartProxyCheckboxId].SelectedOptions
@@ -274,16 +249,16 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			for _, action := range interaction.ActionCallback.BlockActions {
 				// TODO replace these strings with constants
 				switch action.ActionID {
-				case "reserve", "withAuto":
+				case modals.ReserveDeviceActionId, modals.ReserveWithAutoActionId:
 
-					autoRelease := action.ActionID == "withAuto"
+					autoRelease := action.ActionID == modals.ReserveWithAutoActionId
 					errStr := dm.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
 					if errStr != "" {
 						log.Println(errStr)
 						// If there device was already taken -> inform user by personal DM message from the bot
 						dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
 					}
-				case "release":
+				case modals.ReleaseDeviceActionId:
 					victimId, errStr := dm.Release(action.Value, interaction.User.Name)
 					if victimId != "" {
 						log.Println(errStr)

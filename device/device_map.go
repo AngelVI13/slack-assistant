@@ -64,7 +64,9 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) 
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
 	}
-	if device.Reserved {
+	// Only inform user if it was someone else that tried to reserved his device.
+	// This prevents an unnecessary message if you double clicked the reserve button yourself
+	if device.Reserved && device.ReservedById != userId {
 		reservedTime := device.ReservedTime.Format("Mon 15:04")
 		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
 	}
