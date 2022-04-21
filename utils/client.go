@@ -23,6 +23,10 @@ func SetupSlackClient(logWriter io.Writer) *socketmode.Client {
 	proxy := os.Getenv("SL_PROXY")
 	httpClient := http.DefaultClient
 	if proxy != "" {
+		// Currently this does not work on Centos7. Investigate if it works on Debian11
+		// with default proxy stuff i.e. taking the HTTP_PROXY from environment
+		// in that case setting custom proxy should not be needed cause by default the
+		// DefaultTransport uses ProxyFromEnvironment
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 
 		proxyURL, err := url.Parse(proxy)
