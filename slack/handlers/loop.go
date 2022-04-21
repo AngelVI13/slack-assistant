@@ -16,12 +16,22 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
+<<<<<<< HEAD
 var SlashCommands = map[string]ModalHandler{
 	"/show-devices":   &modals.ShowDeviceHandler{},
 	"/reserve-device": &modals.ReserveDeviceHandler{},
 	"/release-device": &modals.ReleaseDeviceHandler{},
 	"/restart-proxy":  &modals.RestartProxyHandler{},
 	"/show-users":     &modals.ShowUsersHandler{},
+=======
+var SlashCommands = map[string]modals.ModalHandler{
+	"/devices": modals.NewCustomOptionModalHandler(
+		modals.DeviceActionMap,
+		modals.DefaultDeviceAction,
+		modals.DeviceModalInfo,
+	),
+	"/restart-proxy": &modals.RestartProxyHandler{},
+>>>>>>> origin/master
 }
 
 type DeviceManager struct {
@@ -29,6 +39,9 @@ type DeviceManager struct {
 	// TODO: add possibility to extend this from slack
 	Users       users.UserMap
 	SlackClient *socketmode.Client
+	// Whenever we are dealing with a modal that contains a state switching option
+	// keep a pointer to it so we can change states
+	CurrentOptionModalHandler modals.OptionModalHandler
 }
 
 func (dm *DeviceManager) GetDevicesInfo() device.DevicesInfo {
@@ -171,8 +184,8 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 // Crashes in case the slack client could not open model view
 func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
 	handler := &modals.UnauthorizedHandler{}
-	// TODO: generalize GenerateModalRequest to accept variadic arguments and just do casting wherever needed
 	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		log.Fatalf("Error opening view: %s", err)
@@ -192,8 +205,9 @@ func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
 
 func (dm *DeviceManager) handleDeviceCommand(
 	command *slack.SlashCommand,
-	handler ModalHandler,
+	handler modals.ModalHandler,
 ) error {
+<<<<<<< HEAD
 	var data any
 	if command.Command == "/show-users" {
 		data = dm.Users
@@ -201,6 +215,19 @@ func (dm *DeviceManager) handleDeviceCommand(
 		data = dm.GetDevicesInfo()
 	}
 	modalRequest := handler.GenerateModalRequest(command, data)
+=======
+	// In case we are dealing with an OptionModalHandler save pointer to it
+	// so we can change its state when needed
+	optionHandler, ok := handler.(modals.OptionModalHandler)
+	if ok {
+		dm.CurrentOptionModalHandler = optionHandler
+		dm.CurrentOptionModalHandler.Reset()
+	} else {
+		dm.CurrentOptionModalHandler = nil
+	}
+
+	modalRequest := handler.GenerateModalRequest(dm.GetDevicesInfo())
+>>>>>>> origin/master
 	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
@@ -214,66 +241,59 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we use title text to determine which modal was submitted
 		switch interaction.View.Title.Text {
-		case modals.MReserveDeviceTitle:
-			autoRelease := false
-			// If anything in checkbox group AutoRelease was selected (there is only 1 checkbox if to auto release or not)
-			// -> enable auto release
-			if len(interaction.View.State.Values[modals.MAutoReleaseActionId][modals.MAutoReleaseCheckboxId].SelectedOptions) > 0 {
-				autoRelease = true
-			}
-
-			for _, selected := range interaction.View.State.Values[modals.MReserveDeviceActionId][modals.MReserveDeviceCheckboxId].SelectedOptions {
-				errStr := dm.Reserve(selected.Value, interaction.User.Name, interaction.User.ID, autoRelease)
-				if errStr != "" {
-					log.Println(errStr)
-					// If there device was already taken -> inform user by personal DM message from the bot
-					dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
-				}
-			}
-		case modals.MReleaseDeviceTitle:
-			for _, selected := range interaction.View.State.Values[modals.MReleaseDeviceActionId][modals.MReleaseDeviceCheckboxId].SelectedOptions {
-				victimId, errStr := dm.Release(selected.Value, interaction.User.Name)
-				if victimId != "" {
-					log.Println(errStr)
-					dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
-				}
-			}
 		case modals.MRestartProxyTitle:
 			deviceNames := []string{}
 			userSelection := interaction.View.State.Values[modals.MRestartProxyActionId][modals.MRestartProxyCheckboxId].SelectedOptions
 			for _, selected := range userSelection {
 				deviceNames = append(deviceNames, selected.Value)
 			}
-			dm.RestartProxies(deviceNames, interaction.User.Name)
+			cmdOutput := dm.RestartProxies(deviceNames, interaction.User.Name)
+			dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
 		default:
 		}
+
 	case slack.InteractionTypeBlockActions:
 		switch interaction.View.Title.Text {
-		case modals.MShowUsersTitle:
-			a := interaction.View.State.Values[modals.MShowUsersActionId][modals.MShowUsersOptionId].SelectedOption.Value
-			/*
-				var view slack.ModalViewRequest
-				switch a {
-				case "option1":
-					view = modals.UpdateModalRequest1()
-				case "option2":
-					view = modals.UpdateModalRequest2()
+		case modals.MDeviceTitle:
+			if dm.CurrentOptionModalHandler == nil {
+				log.Fatalf(
+					`Did not have a valid pointer to OptionModal,
+        				please make sure to close any open modals before restarting the bot`,
+				)
+			}
+
+			// Update option view if new option was chosen
+			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
+			dm.CurrentOptionModalHandler.ChangeAction(option)
+
+			// handle button actions
+			for _, action := range interaction.ActionCallback.BlockActions {
+				switch action.ActionID {
+				case modals.ReserveDeviceActionId, modals.ReserveWithAutoActionId:
+
+					autoRelease := action.ActionID == modals.ReserveWithAutoActionId
+					errStr := dm.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
+					if errStr != "" {
+						log.Println(errStr)
+						// If there device was already taken -> inform user by personal DM message from the bot
+						dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
+					}
+				case modals.ReleaseDeviceActionId:
+					victimId, errStr := dm.Release(action.Value, interaction.User.Name)
+					if victimId != "" {
+						log.Println(errStr)
+						dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+					}
 				default:
 				}
-			*/
-			/*
-				handlers := map[string]func() slack.ModalViewRequest{
-					"option1": modals.UpdateModalRequest1,
-					"option2": modals.UpdateModalRequest2,
-				}
+			}
 
-				handler, ok := handlers[a]
-				if !ok {
-					log.Fatalf("Couldn't find handler for %s", a)
-				}
-				view := handler()
-				dm.SlackClient.UpdateView(view, "", "", interaction.View.ID)
-			*/
+			// update modal view to display changes
+			updatedView := dm.CurrentOptionModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
+			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	default:
 

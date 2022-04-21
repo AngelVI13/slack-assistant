@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -56,7 +57,9 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) 
 	if !ok {
 		log.Fatalf("Wrong device name %s, %+v", deviceName, d)
 	}
-	if device.Reserved {
+	// Only inform user if it was someone else that tried to reserved his device.
+	// This prevents an unnecessary message if you double clicked the reserve button yourself
+	if device.Reserved && device.ReservedById != userId {
 		reservedTime := device.ReservedTime.Format("Mon 15:04")
 		return fmt.Sprintf("*Error*: Could not reserve *%s*. *%s* has just reserved it (at *%s*)", deviceName, device.ReservedBy, reservedTime)
 	}
@@ -102,6 +105,9 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 			device.AutoRelease = false
 		}
 	}
+
+	// Need to synchronize changes from file otherwise the state won't be preserved after restart
+	d.SynchronizeToFile()
 }
 
 func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
@@ -127,20 +133,34 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 		log.Fatalf("error while marshalling request body [%v] - %v", requestBody, err)
 	}
 
+	// Specify timeout.
+	// TODO: Investigate adding transport to client for setting up proxy
+	client := http.Client{
+		Timeout: 2 * time.Second,
+	}
 	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
-	resp, err := http.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
+	resp, err := client.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
 
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Sprintf("Restart proxy POST request to TA_ENDPOINT failed: err=%+v", err)
 	}
 
-	var res map[string]interface{}
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Sprintf("Could not read response body from restart proxy POST req: err=%+v", err)
+	}
 
-	json.NewDecoder(resp.Body).Decode(&res)
+	cmdOutput := jsonPrettyPrint(responseBody)
+	cmdOutput = fmt.Sprintf("```%s```", cmdOutput) // Display cmdOutput as code block for better readability
 
-	fmt.Println(res)
-	// TODO: do something with the response
-	// TODO: might have to do this POST request asyncronously cause slack is expecting
-	// configurmation at some point. Maybe send the response back to the user as a DM?
-	return ""
+	return cmdOutput
+}
+
+func jsonPrettyPrint(in []byte) string {
+	var out bytes.Buffer
+	err := json.Indent(&out, in, "", "\t")
+	if err != nil {
+		return string(in)
+	}
+	return out.String()
 }

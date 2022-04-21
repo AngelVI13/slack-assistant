@@ -54,7 +54,7 @@ func (p *DeviceProps) GetStatusDescription() string {
 		if p.AutoRelease {
 			autoStatus = "\t:eject: *Auto*"
 		}
-		status = fmt.Sprintf("_Reserved by\t:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", p.ReservedBy, timeStr, autoStatus)
+		status = fmt.Sprintf("_:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", p.ReservedBy, timeStr, autoStatus)
 	}
 	return status
 }
