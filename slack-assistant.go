@@ -2,17 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"os"
 
-	"github.com/AngelVI13/slack-assistant/slack/handlers"
-
 	"github.com/AngelVI13/slack-assistant/utils"
 	"github.com/joho/godotenv"
-	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/socketmode"
 )
 
 func main() {
@@ -28,44 +23,11 @@ func main() {
 	wrt := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(wrt)
 
-	// Load Env variables from .dot file
+	// Env variables are used to configure slack client, devices & users data
 	godotenv.Load(".env")
 
-	token := os.Getenv("SLACK_AUTH_TOKEN")
-	appToken := os.Getenv("SLACK_APP_TOKEN")
-
-	debug := false
-	if os.Getenv("SL_DEBUG") == "1" {
-		debug = true
-	}
-
-	// Create a new client to slack
-	client := slack.New(
-		token,
-		slack.OptionDebug(debug),
-		slack.OptionLog(log.New(wrt, "client: ", log.Lshortfile|log.LstdFlags)),
-		slack.OptionAppLevelToken(appToken),
-	)
-
-	// Convert simple slack client to socket mode client
-	socketClient := socketmode.New(
-		client,
-		socketmode.OptionDebug(debug),
-		// Option to set a custom logger
-		socketmode.OptionLog(log.New(wrt, "socketmode: ", log.Lshortfile|log.LstdFlags)),
-	)
-
-	devicesFile := os.Getenv("SL_DEVICES_FILE")
-	workersEndpoint := fmt.Sprintf("%s/workers", os.Getenv("SL_TA_ENDPOINT"))
-	devicesInfo := utils.GetDevices(devicesFile, workersEndpoint)
-
-	usersFile := os.Getenv("SL_USERS_FILE")
-	users := utils.GetUsers(usersFile)
-	deviceManager := handlers.DeviceManager{
-		DevicesMap:  devicesInfo,
-		Users:       users,
-		SlackClient: socketClient,
-	}
+	socketClient := utils.SetupSlackClient(wrt)
+	deviceManager := utils.SetupDeviceManager(socketClient)
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())

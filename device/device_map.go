@@ -114,6 +114,8 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 	}
 
 	// Need to synchronize changes from file otherwise the state won't be preserved after restart
+	// NOTE: This ends up synchronizing to file more than once since the function can be called
+	// multiple times within the specified auto release hour (even if nothing has changed in the devices list).
 	d.SynchronizeToFile()
 }
 
