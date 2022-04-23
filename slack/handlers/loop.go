@@ -9,13 +9,14 @@ import (
 
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
+	"github.com/AngelVI13/slack-assistant/slack/slash"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
-var SlashCommands = map[string]modals.ModalHandler{
+var SlashCommandsForModals = map[string]modals.ModalHandler{
 	"/devices": modals.NewCustomOptionModalHandler(
 		modals.DeviceActionMap,
 		modals.DefaultDeviceAction,
@@ -24,9 +25,14 @@ var SlashCommands = map[string]modals.ModalHandler{
 	"/restart-proxy": &modals.RestartProxyHandler{},
 }
 
+var SlashCommandsForHandlers = map[string]slash.SlashHandler{
+	"test-review": &slash.ReviewHandler{},
+}
+
 type DeviceManager struct {
 	device.DevicesMap
 	// TODO: add possibility to extend this from slack
+	// TODO: Reword this to a separate struct
 	Users       map[string]device.AccessRight
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
@@ -184,7 +190,8 @@ func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashComma
 
 // handleSlashCommand will take a slash command and route to the appropriate function
 func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
-	handler, hasValue := SlashCommands[command.Command]
+	// TODO: check if its in SlashCommandsForHandlers
+	handler, hasValue := SlashCommandsForModals[command.Command]
 	if !hasValue {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
