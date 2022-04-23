@@ -7,7 +7,7 @@ import (
 )
 
 func SetupDeviceManager(config *config.Config, socketClient *socketmode.Client) *handlers.DeviceManager {
-	devicesInfo := GetDevices(config.DevicesFilename, workersEndpoint)
+	devicesInfo := GetDevices(config)
 
 	users := GetUsers(config.UsersFilename)
 	deviceManager := &handlers.DeviceManager{
