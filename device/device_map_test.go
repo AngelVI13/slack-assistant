@@ -2,9 +2,12 @@ package device
 
 import (
 	"testing"
+
+	"github.com/AngelVI13/slack-assistant/config"
 )
 
 func TestNewDevicesMapFromJson(t *testing.T) {
+	config := &config.Config{}
 	json_input := []byte(`
             {
                 "Devices":{
@@ -22,7 +25,7 @@ func TestNewDevicesMapFromJson(t *testing.T) {
                  }
             }`)
 
-	devicesMap := NewDevicesMapFromJson(json_input)
+	devicesMap := NewDevicesMapFromJson(json_input, config)
 
 	if len(devicesMap.Devices) != 1 {
 		t.Errorf("Expected 1 device to be process but got %d", len(devicesMap.Devices))

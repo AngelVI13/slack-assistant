@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/utils"
 	"github.com/joho/godotenv"
 )
@@ -25,9 +26,10 @@ func main() {
 
 	// Env variables are used to configure slack client, devices & users data
 	godotenv.Load(".env")
+	config := config.ConfigFromEnv()
 
-	socketClient := utils.SetupSlackClient(wrt)
-	deviceManager := utils.SetupDeviceManager(socketClient)
+	socketClient := utils.SetupSlackClient(config, wrt)
+	deviceManager := utils.SetupDeviceManager(config, socketClient)
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
