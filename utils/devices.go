@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/device"
 )
 
@@ -42,14 +43,14 @@ func GetTmtWorkers(endpoint string) (*WorkersResponse, error) {
 	return &workers, nil
 }
 
-func GetDevices(path, taProjectEndpoint string) device.DevicesMap {
+func GetDevices(config *config.Config) device.DevicesMap {
 	// 1.a If device info file exists -> read info from there
 	// 1.b Else -> ask TA endpoint for list of devices & their properties & create a device info file
 	var devicesList device.DevicesMap
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(config.DevicesFilename)
 	if errors.Is(err, os.ErrNotExist) {
-		info, err := GetTmtWorkers(taProjectEndpoint)
+		info, err := GetTmtWorkers(config.WorkersEndpoint)
 		if err != nil {
 			// No local device info and error while getting info from TMT -> fail program
 			log.Fatal(err)
@@ -73,12 +74,12 @@ func GetDevices(path, taProjectEndpoint string) device.DevicesMap {
 		log.Fatal(err)
 	} else {
 		// Devices file exists -> read from there
-		devicesList = device.NewDevicesMapFromJson(data)
+		devicesList = device.NewDevicesMapFromJson(data, config)
 	}
 
 	loadedDeviceNum := len(devicesList.Devices)
 	if loadedDeviceNum == 0 {
-		log.Fatalf("No devices found in (%s).", path)
+		log.Fatalf("No devices found in (%s).", config.DevicesFilename)
 	}
 
 	log.Printf("INIT: Device list loaded successfully (%d devices configured)", loadedDeviceNum)
