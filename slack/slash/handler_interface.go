@@ -1,7 +1,10 @@
 package slash
 
-import "github.com/slack-go/slack"
+import (
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/socketmode"
+)
 
 type SlashHandler interface {
-	Execute(command *slack.SlashCommand, data any)
+	Execute(command *slack.SlashCommand, slackClient *socketmode.Client, data any) error
 }

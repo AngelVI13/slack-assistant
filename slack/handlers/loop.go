@@ -26,7 +26,7 @@ var SlashCommandsForModals = map[string]modals.ModalHandler{
 }
 
 var SlashCommandsForHandlers = map[string]slash.SlashHandler{
-	"test-review": &slash.ReviewHandler{},
+	"/test-review": &slash.ReviewHandler{},
 }
 
 type DeviceManager struct {
@@ -190,14 +190,16 @@ func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashComma
 
 // handleSlashCommand will take a slash command and route to the appropriate function
 func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
-	// TODO: check if its in SlashCommandsForHandlers
-	handler, hasValue := SlashCommandsForModals[command.Command]
-	if !hasValue {
+	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
+		return dm.handleDeviceCommand(&command, handler)
+	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
+		return handler.Execute(&command, dm.SlackClient, dm.Users)
+	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
 		return nil
 	}
-	return dm.handleDeviceCommand(&command, handler)
+
 }
 
 func (dm *DeviceManager) handleDeviceCommand(
