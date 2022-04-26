@@ -12,7 +12,7 @@ func SetupDeviceManager(config *config.Config, socketClient *socketmode.Client) 
 	users := GetUsers(config.UsersFilename)
 	deviceManager := &handlers.DeviceManager{
 		DevicesMap:  devicesInfo,
-		Users:       users,
+		UsersInfo:   users,
 		SlackClient: socketClient,
 	}
 	return deviceManager

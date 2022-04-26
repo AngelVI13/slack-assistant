@@ -10,6 +10,7 @@ import (
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
+	"github.com/AngelVI13/slack-assistant/users"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
@@ -33,7 +34,7 @@ type DeviceManager struct {
 	device.DevicesMap
 	// TODO: add possibility to extend this from slack
 	// TODO: Reword this to a separate struct
-	Users       map[string]device.AccessRight
+	users.UsersInfo
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
 	// keep a pointer to it so we can change states
@@ -121,7 +122,7 @@ func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
 		log.Fatalf("Could not type cast the message to a SlashCommand: %v\n", command)
 	}
 
-	_, userAllowed := dm.Users[command.UserName]
+	_, userAllowed := dm.UsersInfo[command.UserName]
 	if !userAllowed {
 		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
@@ -193,7 +194,7 @@ func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
 	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
 		return dm.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
-		return handler.Execute(&command, dm.SlackClient, dm.Users)
+		return handler.Execute(&command, dm.SlackClient, dm.UsersInfo)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
