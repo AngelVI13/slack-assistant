@@ -30,6 +30,9 @@ func main() {
 
 	socketClient := utils.SetupSlackClient(config, wrt)
 	deviceManager := utils.SetupDeviceManager(config, socketClient)
+	reviewersList := utils.SetupReviewersList(config, deviceManager.UsersInfo)
+	// TODO this doesn't work for some reason
+	log.Println(reviewersList)
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
