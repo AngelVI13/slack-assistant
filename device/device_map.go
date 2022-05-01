@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -61,6 +62,50 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	if err != nil {
 		log.Fatalf("Could not parse devices file. Error: %+v", err)
 	}
+}
+
+func (d *DevicesMap) GetDevicesInfo() DevicesInfo {
+	devices := make(DevicesInfo, 0, len(d.Devices))
+
+	for _, value := range d.Devices {
+		devices = append(devices, value)
+	}
+
+	// NOTE: This sorts the device list starting from free devices
+	sort.Slice(devices, func(i, j int) bool {
+		return !devices[i].Reserved
+	})
+
+	firstTaken := -1 // Index of first taken device
+	for i, device := range devices {
+		if device.Reserved {
+			firstTaken = i
+			break
+		}
+	}
+
+	// NOTE: this might be unnecessary but it shows devices in predicable way in UI so its nice.
+	// If all devices are free or all devices are taken, sort by name
+	if firstTaken == -1 || firstTaken == 0 {
+		sort.Slice(devices, func(i, j int) bool {
+			return devices[i].Name < devices[j].Name
+		})
+	} else {
+		// split devices into 2 - free & taken
+		// sort each sub slice based on device name/port
+		free := devices[:firstTaken]
+		taken := devices[firstTaken:]
+
+		sort.Slice(free, func(i, j int) bool {
+			return free[i].Name < free[j].Name
+		})
+
+		sort.Slice(taken, func(i, j int) bool {
+			return taken[i].Name < taken[j].Name
+		})
+	}
+
+	return devices
 }
 
 func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) (err string) {
