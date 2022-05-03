@@ -32,7 +32,7 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 type DataHolder struct {
 	Devices   *device.DevicesMap
 	Users     users.UsersInfo
-	Reviewers []*users.Reviewer
+	Reviewers users.Reviewers
 }
 
 type SlackBot struct {
@@ -153,7 +153,7 @@ func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
 	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
 		return bot.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
-		return handler.Execute(&command, bot.SlackClient, bot.Data.Users)
+		return handler.Execute(&command, bot.SlackClient, bot.Data.Reviewers)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)

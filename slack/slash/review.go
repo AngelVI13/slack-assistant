@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 )
@@ -26,16 +26,13 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 		return nil
 	}
 
-	users, ok := data.(map[string]device.AccessRight)
+	users, ok := data.(users.Reviewers)
 	if !ok {
 		log.Fatalf("Expected users data, but got something else: %+v", data)
 	}
-	// TODO: get reviewer ID (this is just name currently)
 	reviewer := chooseReviewer(command.UserName, users)
-	fmt.Println(reviewer)
+	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n_Submitted by_: <@%s>\n_URL_: %s", taskId, reviewer.Id, command.UserID, url)
 
-	userIdPlaceholder := "U9K74SZT7" // currently this is AI ID
-	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n _URL_ \n%s", taskId, userIdPlaceholder, url)
 	// TODO: send a (non-ephemeral) message back to the channel where this message came from
 	// Maybe i need to restrict this to only channels the bot is invited to!!!
 	slackClient.PostEphemeral(command.UserID, command.UserID, slack.MsgOptionText(reviewMsg, false))
@@ -58,16 +55,16 @@ func getTaskLink(taskId string) (url string, errorMsg string) {
 	return url, errorMsg
 }
 
-func chooseReviewer(senderName string, users map[string]device.AccessRight) string {
+func chooseReviewer(senderName string, reviewers users.Reviewers) *users.Reviewer {
 	rand.Seed(time.Now().UnixNano())
 
-	possibleReviewers := []string{}
-	for userName := range users {
-		if userName == senderName {
+	possibleReviewers := users.Reviewers{}
+	for _, reviewer := range reviewers {
+		if reviewer.Name == senderName {
 			continue
 		}
 
-		possibleReviewers = append(possibleReviewers, userName)
+		possibleReviewers = append(possibleReviewers, reviewer)
 	}
 
 	return possibleReviewers[rand.Intn(len(possibleReviewers))]

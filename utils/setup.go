@@ -4,28 +4,29 @@ import (
 	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/slack/handlers"
 	"github.com/AngelVI13/slack-assistant/users"
-	"github.com/slack-go/slack/socketmode"
 )
 
-func SetupDeviceManager(config *config.Config, socketClient *socketmode.Client) *handlers.DeviceManager {
+// SetupDataHolder Loads all data sources from locations specified in config file
+func SetupDataHolder(config *config.Config) *handlers.DataHolder {
 	devicesInfo := GetDevices(config)
+	usersInfo := GetUsers(config.UsersFilename)
+	reviewers := SetupReviewersList(usersInfo)
 
-	users := GetUsers(config.UsersFilename)
-	deviceManager := &handlers.DeviceManager{
-		DevicesMap:  devicesInfo,
-		UsersInfo:   users,
-		SlackClient: socketClient,
+	dataHolder := &handlers.DataHolder{
+		Devices:   &devicesInfo,
+		Users:     usersInfo,
+		Reviewers: reviewers,
 	}
-	return deviceManager
+	return dataHolder
 }
 
-func SetupReviewersList(config *config.Config, usersInfo users.UsersInfo) (reviewers []users.Reviewer) {
+func SetupReviewersList(usersInfo users.UsersInfo) (reviewers []*users.Reviewer) {
 	for name, props := range usersInfo {
 		if !props.IsReviewer {
 			continue
 		}
 
-		reviewers = append(reviewers, users.Reviewer{Name: name, Id: props.Id})
+		reviewers = append(reviewers, &users.Reviewer{Name: name, Id: props.Id})
 	}
 	return reviewers
 }
