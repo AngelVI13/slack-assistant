@@ -31,6 +31,7 @@ func main() {
 
 	socketClient := utils.SetupSlackClient(config, wrt)
 	dataHolder := utils.SetupDataHolder(config)
+
 	slackBot := handlers.SlackBot{
 		Data:        dataHolder,
 		SlackClient: socketClient,

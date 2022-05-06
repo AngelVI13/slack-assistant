@@ -58,8 +58,9 @@ func getTaskLink(taskId string) (url string, errorMsg string) {
 func chooseReviewer(senderName string, reviewers users.Reviewers) *users.Reviewer {
 	rand.Seed(time.Now().UnixNano())
 
-	possibleReviewers := users.Reviewers{}
-	for _, reviewer := range reviewers {
+	// We remove 1 cause the sender can't be a reviewer
+	possibleReviewers := make([]*users.Reviewer, len(reviewers.Current)-1)
+	for _, reviewer := range reviewers.Current {
 		if reviewer.Name == senderName {
 			continue
 		}

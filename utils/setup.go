@@ -10,23 +10,11 @@ import (
 func SetupDataHolder(config *config.Config) *handlers.DataHolder {
 	devicesInfo := GetDevices(config)
 	usersInfo := GetUsers(config.UsersFilename)
-	reviewers := SetupReviewersList(usersInfo)
 
 	dataHolder := &handlers.DataHolder{
 		Devices:   &devicesInfo,
 		Users:     usersInfo,
-		Reviewers: reviewers,
+		Reviewers: users.NewReviewers(&usersInfo),
 	}
 	return dataHolder
-}
-
-func SetupReviewersList(usersInfo users.UsersInfo) (reviewers []*users.Reviewer) {
-	for name, props := range usersInfo {
-		if !props.IsReviewer {
-			continue
-		}
-
-		reviewers = append(reviewers, &users.Reviewer{Name: name, Id: props.Id})
-	}
-	return reviewers
 }
