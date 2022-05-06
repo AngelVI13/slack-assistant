@@ -10,12 +10,15 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/AngelVI13/slack-assistant/config"
 )
 
 type DeviceName string
 
 type DevicesMap struct {
 	Devices map[DeviceName]*DeviceProps
+	config  *config.Config
 }
 
 func NewDevicesMap() DevicesMap {
@@ -25,9 +28,10 @@ func NewDevicesMap() DevicesMap {
 }
 
 // NewDevicesMapFromJson Takes json data as input and returns a populated DevicesMap object
-func NewDevicesMapFromJson(data []byte) DevicesMap {
+func NewDevicesMapFromJson(data []byte, config *config.Config) DevicesMap {
 	devicesList := NewDevicesMap()
 	devicesList.synchronizeFromFile(data)
+	devicesList.config = config
 	return devicesList
 }
 
@@ -37,7 +41,7 @@ func (d *DevicesMap) SynchronizeToFile() {
 		log.Fatal(err)
 	}
 
-	err = os.WriteFile(os.Getenv("SL_DEVICES_FILE"), data, 0666)
+	err = os.WriteFile(d.config.DevicesFilename, data, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,6 +111,8 @@ func (d *DevicesMap) AutoRelease(when time.Time) {
 	}
 
 	// Need to synchronize changes from file otherwise the state won't be preserved after restart
+	// NOTE: This ends up synchronizing to file more than once since the function can be called
+	// multiple times within the specified auto release hour (even if nothing has changed in the devices list).
 	d.SynchronizeToFile()
 }
 
@@ -138,7 +144,7 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 	client := http.Client{
 		Timeout: 2 * time.Second,
 	}
-	proxyUrl := fmt.Sprintf("%s/proxy", os.Getenv("SL_TA_ENDPOINT"))
+	proxyUrl := fmt.Sprintf("%s/proxy", d.config.TaEndpoint)
 	resp, err := client.Post(proxyUrl, "application/json", bytes.NewBuffer(requestBodyJson))
 
 	if err != nil {
