@@ -25,6 +25,7 @@ type Reviewer struct {
 	Id   string
 }
 
+// TODO: Update this data when add/edit/remove users feature is done
 type Reviewers struct {
 	All      []*Reviewer
 	Current  []*Reviewer
@@ -71,6 +72,7 @@ func GetReviewers(usersInfo *UsersInfo) (reviewers []*Reviewer) {
 	return reviewers
 }
 
+// TODO: Make this into a generic if its used more often
 func removeByIdx(s []*Reviewer, i int) []*Reviewer {
 	s[i] = s[len(s)-1]
 	return s[:len(s)-1]
