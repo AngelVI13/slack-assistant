@@ -10,8 +10,10 @@ type Config struct {
 	SlackChannelId string
 	SlackAppToken  string
 
-	DevicesFilename string
-	UsersFilename   string
+	DevicesFilename   string
+	UsersFilename     string
+	ReviewersFilename string
+
 	Debug           bool
 	TaEndpoint      string
 	WorkersEndpoint string
@@ -31,6 +33,14 @@ func ConfigFromEnv() *Config {
 
 		DevicesFilename: os.Getenv("SL_DEVICES_FILE"),
 		UsersFilename:   os.Getenv("SL_USERS_FILE"),
+
+		// NOTE: this file is used to store current list of reviewers
+		// i.e. reviewers are selected one by one until everyone has taken his turn
+		// after which the list is reset to full reviewers list.
+		// I don't see a reason why you might want to have that filename configurable
+		// so hardcoded it will stay.
+		ReviewersFilename: ".reviewers.txt",
+
 		Debug:           os.Getenv("SL_DEBUG") == "1",
 		TaEndpoint:      taEndpoint,
 		WorkersEndpoint: fmt.Sprintf("%s/workers", taEndpoint),

@@ -14,7 +14,7 @@ func SetupDataHolder(config *config.Config) *handlers.DataHolder {
 	dataHolder := &handlers.DataHolder{
 		Devices:   &devicesInfo,
 		Users:     usersInfo,
-		Reviewers: users.NewReviewers(&usersInfo),
+		Reviewers: users.NewReviewers(config, &usersInfo),
 	}
 	return dataHolder
 }

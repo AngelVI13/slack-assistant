@@ -1,9 +1,14 @@
 package users
 
 import (
+	"encoding/json"
+	"errors"
+	"log"
 	"math/rand"
+	"os"
 	"time"
 
+	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/device"
 )
 
@@ -21,16 +26,36 @@ type Reviewer struct {
 }
 
 type Reviewers struct {
-	All     []*Reviewer
-	Current []*Reviewer
+	All      []*Reviewer
+	Current  []*Reviewer
+	Filename string
 }
 
-func NewReviewers(usersInfo *UsersInfo) Reviewers {
-	// TODO: load this from reviewers file. If doesn't exist create a new file from usersInfo
-	allReviewers := GetReviewers(usersInfo)
+func NewReviewers(config *config.Config, usersInfo *UsersInfo) Reviewers {
+	filename := config.ReviewersFilename
 
-	reviewers := Reviewers{All: allReviewers}
-	reviewers.ResetCurrentReviewers()
+	allReviewers := GetReviewers(usersInfo)
+	reviewers := Reviewers{All: allReviewers, Filename: filename}
+
+	_, err := os.Stat(filename)
+	if errors.Is(err, os.ErrNotExist) {
+		// Load reviewers from users list and create current reviewers list file
+		reviewers.ResetCurrentReviewers()
+		reviewers.synchronizeToFile()
+
+		log.Printf("INFO: Generated reviewers list from users info (%d reviewers).", len(reviewers.All))
+	} else if err == nil {
+		// Load current reviewers from file
+		// All reviewers info comes from users info
+		data, err := os.ReadFile(filename)
+		if err != nil {
+			log.Fatalf("Failed to read from reviewers file: %+v", err)
+		}
+
+		reviewers.synchronizeFromFile(data)
+	} else {
+		log.Fatalf("Initializing reviewers failed. Couldn't open current reviewers file: %+v", err)
+	}
 
 	return reviewers
 }
@@ -81,5 +106,29 @@ func (r *Reviewers) ChooseReviewer(senderName string) *Reviewer {
 	reviewer := r.Current[chosenIdx]
 	r.Current = removeByIdx(r.Current, chosenIdx)
 
+	r.synchronizeToFile()
+
 	return reviewer
+}
+
+func (r *Reviewers) synchronizeToFile() {
+	data, err := json.Marshal(r.Current)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(r.Filename, data, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("INFO: Wrote reviewers list to file")
+}
+
+func (r *Reviewers) synchronizeFromFile(data []byte) {
+	err := json.Unmarshal(data, &r.Current)
+	if err != nil {
+		log.Fatalf("Could not parse reviewers file. Error: %+v", err)
+	}
+	log.Printf("INFO: Reviewers list loaded successfully (%d reviewers in queue)", len(r.Current))
+	log.Printf("INFO: ---------------------------------- (%d total reviewers)", len(r.All))
 }
