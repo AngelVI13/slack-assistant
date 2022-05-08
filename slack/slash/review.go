@@ -3,10 +3,8 @@ package slash
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
@@ -26,11 +24,11 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 		return nil
 	}
 
-	users, ok := data.(users.Reviewers)
+	users, ok := data.(*users.Reviewers)
 	if !ok {
 		log.Fatalf("Expected users data, but got something else: %+v", data)
 	}
-	reviewer := chooseReviewer(command.UserName, users)
+	reviewer := users.ChooseReviewer(command.UserName)
 	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n_Submitted by_: <@%s>\n_URL_: %s", taskId, reviewer.Id, command.UserID, url)
 
 	// TODO: send a (non-ephemeral) message back to the channel where this message came from
@@ -53,20 +51,4 @@ func getTaskLink(taskId string) (url string, errorMsg string) {
 	}
 
 	return url, errorMsg
-}
-
-func chooseReviewer(senderName string, reviewers users.Reviewers) *users.Reviewer {
-	rand.Seed(time.Now().UnixNano())
-
-	// We remove 1 cause the sender can't be a reviewer
-	possibleReviewers := make([]*users.Reviewer, len(reviewers.Current)-1)
-	for _, reviewer := range reviewers.Current {
-		if reviewer.Name == senderName {
-			continue
-		}
-
-		possibleReviewers = append(possibleReviewers, reviewer)
-	}
-
-	return possibleReviewers[rand.Intn(len(possibleReviewers))]
 }

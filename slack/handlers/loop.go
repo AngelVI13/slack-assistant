@@ -153,7 +153,8 @@ func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
 	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
 		return bot.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
-		return handler.Execute(&command, bot.SlackClient, bot.Data.Reviewers)
+		// TODO: Reviewers here is hardcoded -> need a better way to handle args for slash commands
+		return handler.Execute(&command, bot.SlackClient, &bot.Data.Reviewers)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
