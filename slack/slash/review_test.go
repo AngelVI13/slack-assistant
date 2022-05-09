@@ -1,31 +1,54 @@
 package slash
 
 import (
+	"os"
 	"testing"
 
-	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/users"
 )
 
-func TestChooseReviewer(t *testing.T) {
-	users := map[string]device.AccessRight{
-		"angel.iliev":    device.ADMIN,
-		"laima.strigo":   device.STANDARD,
-		"aurimas.razmis": device.ADMIN,
+func isInReviewers(reviewers []*users.Reviewer, name string) bool {
+	for _, r := range reviewers {
+		if r.Name == name {
+			return true
+		}
 	}
+	return false
+}
+
+func TestChooseReviewer(t *testing.T) {
+	// Case1: No reviewers file
+	reviewersFile := "does_not_exist.txt"
+	reviewersInfo := users.Reviewers{
+		All: []*users.Reviewer{
+			{Name: "angel.iliev", Id: "1"},
+			{Name: "laima.strigo", Id: "2"},
+			{Name: "aurimas.razmis", Id: "3"},
+		},
+		Current: []*users.Reviewer{
+			{Name: "angel.iliev", Id: "1"},
+			{Name: "laima.strigo", Id: "2"},
+			{Name: "aurimas.razmis", Id: "3"},
+		},
+		Filename: reviewersFile,
+	}
+
 	sender := "angel.iliev"
 
-	// Seems a bit pointless but its good to check that sender is never the reviewer
-	// Since chooseReviewer is done randomly - run it a few times to make sure this doesn't happen
-	for i := 0; i < 100; i += 1 {
-		reviewer := chooseReviewer(sender, users)
-		if reviewer == sender {
-			t.Errorf("Chosen reviewer is the same as sender! reviewer == sender == %s", reviewer)
-			break
-		}
+	reviewer := reviewersInfo.ChooseReviewer(sender)
+	if reviewer.Name == sender {
+		t.Errorf("Chosen reviewer is the same as sender! reviewer == sender == %s", reviewer)
+	}
 
-		if _, ok := users[reviewer]; !ok {
-			t.Errorf("Reviewer is not part of users list! reviewer=%s, users=%+v", reviewer, users)
-			break
-		}
+	if !isInReviewers(reviewersInfo.All, reviewer.Name) {
+		t.Errorf("Chosen reviewer is not in ALL reviewers list %s; %+v", reviewer.Name, reviewersInfo.All)
+	}
+
+	if _, err := os.Stat(reviewersInfo.Filename); err != nil {
+		t.Errorf("Reviewers file was not created/updated: %s", reviewersInfo.Filename)
+	}
+
+	if err := os.Remove(reviewersInfo.Filename); err != nil {
+		t.Errorf("Failed to remove reviewers file after test was finished: %s", reviewersInfo.Filename)
 	}
 }
