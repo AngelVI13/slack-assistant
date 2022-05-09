@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/AngelVI13/slack-assistant/utils/users"
+	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
 )
 
@@ -20,7 +20,7 @@ func (h *ShowUsersHandler) GenerateModalRequest(users any) slack.ModalViewReques
 	return generateModalRequest(MShowUsersTitle, allBlocks)
 }
 
-func generateSectionBlocks(users users.UserMap) []*slack.SectionBlock {
+func generateSectionBlocks(users users.UsersMap) []*slack.SectionBlock {
 	var userBlocks []*slack.SectionBlock
 
 	for user, rights := range users {
@@ -36,7 +36,7 @@ func generateSectionBlocks(users users.UserMap) []*slack.SectionBlock {
 func (h *ShowUsersHandler) GenerateBlocks(usersM any) []slack.Block {
 	var allBlocks []slack.Block
 
-	usersMap, ok := usersM.(users.UserMap)
+	usersMap, ok := usersM.(users.UsersMap)
 	if !ok {
 		log.Fatalf("Expected DevicesInfo but got %v", usersM)
 	}

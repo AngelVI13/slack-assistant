@@ -3,10 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
-	"log"
 )
 
 // HandleEventMessage will take an event and handle it properly based on the type of event
@@ -43,7 +44,8 @@ func HandleAppMentionEvent(event *slackevents.AppMentionEvent, client *socketmod
 	// Create a help text from the supported slash commands
 	// TODO: maybe add a command description?
 	helpText := ""
-	for key := range SlashCommands {
+	// TODO: add info for SlashCommandsForHandlers
+	for key := range SlashCommandsForModals {
 		helpText += fmt.Sprintf(":black_medium_small_square: %s\n", key)
 	}
 	// Send a message to the user

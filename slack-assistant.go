@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/AngelVI13/slack-assistant/config"
+	"github.com/AngelVI13/slack-assistant/slack/handlers"
 	"github.com/AngelVI13/slack-assistant/utils"
 	"github.com/joho/godotenv"
 )
@@ -29,14 +30,19 @@ func main() {
 	config := config.ConfigFromEnv()
 
 	socketClient := utils.SetupSlackClient(config, wrt)
-	deviceManager := utils.SetupDeviceManager(config, socketClient)
+	dataHolder := utils.SetupDataHolder(config)
+
+	slackBot := handlers.SlackBot{
+		Data:        dataHolder,
+		SlackClient: socketClient,
+	}
 
 	// Create a context that can be used to cancel goroutine
 	ctx, cancel := context.WithCancel(context.Background())
 	// Make this cancel called properly in a real program , graceful shutdown etc
 	defer cancel()
 
-	go deviceManager.ProcessMessageLoop(ctx)
+	go slackBot.ProcessMessageLoop(ctx)
 
 	socketClient.Run()
 }

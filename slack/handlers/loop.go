@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
 	"time"
 
 	"github.com/AngelVI13/slack-assistant/device"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
-	"github.com/AngelVI13/slack-assistant/utils/users"
+	"github.com/AngelVI13/slack-assistant/slack/slash"
+	"github.com/AngelVI13/slack-assistant/users"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
-var SlashCommands = map[string]modals.ModalHandler{
+var SlashCommandsForModals = map[string]modals.ModalHandler{
 	"/devices": modals.NewCustomOptionModalHandler(
 		modals.DeviceActionMap,
 		modals.DefaultDeviceAction,
@@ -30,61 +30,26 @@ var SlashCommands = map[string]modals.ModalHandler{
 	),
 }
 
-type DeviceManager struct {
-	device.DevicesMap
-	// TODO: add possibility to extend this from slack
-	Users       users.UserMap
+var SlashCommandsForHandlers = map[string]slash.SlashHandler{
+	"/review": &slash.ReviewHandler{},
+}
+
+type DataHolder struct {
+	Devices   *device.DevicesMap
+	Users     *users.UsersInfo
+	Reviewers users.Reviewers
+}
+
+type SlackBot struct {
+	Data *DataHolder
+
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
 	// keep a pointer to it so we can change states
 	CurrentOptionModalHandler modals.OptionModalHandler
 }
 
-func (dm *DeviceManager) GetDevicesInfo() device.DevicesInfo {
-	devices := make(device.DevicesInfo, 0, len(dm.Devices))
-
-	for _, value := range dm.Devices {
-		devices = append(devices, value)
-	}
-
-	// NOTE: This sorts the device list starting from free devices
-	sort.Slice(devices, func(i, j int) bool {
-		return !devices[i].Reserved
-	})
-
-	firstTaken := -1 // Index of first taken device
-	for i, device := range devices {
-		if device.Reserved {
-			firstTaken = i
-			break
-		}
-	}
-
-	// NOTE: this might be unnecessary but it shows devices in predicable way in UI so its nice.
-	// If all devices are free or all devices are taken, sort by name
-	if firstTaken == -1 || firstTaken == 0 {
-		sort.Slice(devices, func(i, j int) bool {
-			return devices[i].Name < devices[j].Name
-		})
-	} else {
-		// split devices into 2 - free & taken
-		// sort each sub slice based on device name/port
-		free := devices[:firstTaken]
-		taken := devices[firstTaken:]
-
-		sort.Slice(free, func(i, j int) bool {
-			return free[i].Name < free[j].Name
-		})
-
-		sort.Slice(taken, func(i, j int) bool {
-			return taken[i].Name < taken[j].Name
-		})
-	}
-
-	return devices
-}
-
-func (dm *DeviceManager) processEventApi(event socketmode.Event) {
+func (bot *SlackBot) processEventApi(event socketmode.Event) {
 	// The Event sent on the channel is not the same as the EventAPI events so we need to type cast it
 	eventsAPIEvent, ok := event.Data.(slackevents.EventsAPIEvent)
 	if !ok {
@@ -92,57 +57,57 @@ func (dm *DeviceManager) processEventApi(event socketmode.Event) {
 	}
 
 	// We need to send an Acknowledge to the slack server
-	dm.SlackClient.Ack(*event.Request)
+	bot.SlackClient.Ack(*event.Request)
 	// Now we have an Events API event, but this event type can in turn be many types, so we actually need another type switch
-	err := HandleEventMessage(eventsAPIEvent, dm.SlackClient)
+	err := HandleEventMessage(eventsAPIEvent, bot.SlackClient)
 	if err != nil {
 		// Replace with actual err handeling
 		log.Fatal(err)
 	}
 }
 
-func (dm *DeviceManager) processEventInteractive(event socketmode.Event) {
+func (bot *SlackBot) processEventInteractive(event socketmode.Event) {
 	interaction, ok := event.Data.(slack.InteractionCallback)
 	if !ok {
 		log.Fatalf("Could not type cast the message to a Interaction callback: %v\n", interaction)
 	}
 
-	err := dm.handleInteractionEvent(interaction)
+	err := bot.handleInteractionEvent(interaction)
 	if err != nil {
 		log.Fatal(err)
 	}
-	dm.SlackClient.Ack(*event.Request)
+	bot.SlackClient.Ack(*event.Request)
 }
 
-func (dm *DeviceManager) processSlashCommand(event socketmode.Event) {
+func (bot *SlackBot) processSlashCommand(event socketmode.Event) {
 	// Just like before, type cast to the correct event type, this time a SlashEvent
 	command, ok := event.Data.(slack.SlashCommand)
 	if !ok {
 		log.Fatalf("Could not type cast the message to a SlashCommand: %v\n", command)
 	}
 
-	_, userAllowed := dm.Users[command.UserName]
+	_, userAllowed := bot.Data.Users.Map[command.UserName]
 	if !userAllowed {
 		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
-		dm.handleUnauthorizedUserCommand(&command)
-		dm.SlackClient.Ack(*event.Request, nil)
+		bot.handleUnauthorizedUserCommand(&command)
+		bot.SlackClient.Ack(*event.Request, nil)
 		return
 	}
 
 	log.Printf("PROCESS: Processing SLASH (%s) from (%s)", command.Command, command.UserName)
 	// handleSlashCommand will take care of the command
-	err := dm.handleSlashCommand(command)
+	err := bot.handleSlashCommand(command)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Dont forget to acknowledge the request and send the payload
 	// (we don't yet have any payload to send so we send nil)
-	dm.SlackClient.Ack(*event.Request, nil)
+	bot.SlackClient.Ack(*event.Request, nil)
 
 }
 
-func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
+func (bot *SlackBot) ProcessMessageLoop(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Minute)
 
 	// Create a for loop that selects either the context cancellation or the events incomming
@@ -153,84 +118,87 @@ func (dm *DeviceManager) ProcessMessageLoop(ctx context.Context) {
 			ticker.Stop()
 			log.Println("Shutting down socketmode listener")
 			return
-		case event := <-dm.SlackClient.Events:
+		case event := <-bot.SlackClient.Events:
 			// We have a new Events, let's type switch the event
 			// Add more use cases here if you want to listen to other events.
 			switch event.Type {
 			case socketmode.EventTypeEventsAPI:
 				// Handle mentions
 				// NOTE: there is no user restriction for app mentions
-				dm.processEventApi(event)
+				bot.processEventApi(event)
 			case socketmode.EventTypeSlashCommand:
-				dm.processSlashCommand(event)
+				bot.processSlashCommand(event)
 			case socketmode.EventTypeInteractive:
 				// Handle interaction events i.e. user voted in our poll etc.
-				dm.processEventInteractive(event)
+				bot.processEventInteractive(event)
 			}
 		case <-ticker.C:
 			// Auto release devices at midnight
 			//                YYYY  M  D  H  M  S  NS timezone
 			when := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
-			dm.AutoRelease(when)
+			bot.Data.Devices.AutoRelease(when)
 		}
 	}
 }
 
 // handleUnauthorizedUserCommand will show an error message modal to user.
 // Crashes in case the slack client could not open model view
-func (dm *DeviceManager) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
+func (bot *SlackBot) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
 	handler := &modals.UnauthorizedHandler{}
-	modalRequest := handler.GenerateModalRequest(command, dm.GetDevicesInfo())
+	modalRequest := handler.GenerateModalRequest(command, bot.Data.Devices.GetDevicesInfo())
 
-	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
+	_, err := bot.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		log.Fatalf("Error opening view: %s", err)
 	}
 }
 
 // handleSlashCommand will take a slash command and route to the appropriate function
-func (dm *DeviceManager) handleSlashCommand(command slack.SlashCommand) error {
-	handler, hasValue := SlashCommands[command.Command]
-	if !hasValue {
+func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
+	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
+		return bot.handleDeviceCommand(&command, handler)
+	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
+		// TODO: Reviewers here is hardcoded -> need a better way to handle args for slash commands
+		return handler.Execute(&command, bot.SlackClient, &bot.Data.Reviewers)
+	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
 		return nil
 	}
-	return dm.handleDeviceCommand(&command, handler)
+
 }
 
-func (dm *DeviceManager) handleDeviceCommand(
+func (bot *SlackBot) handleDeviceCommand(
 	command *slack.SlashCommand,
 	handler modals.ModalHandler,
 ) error {
 
 	var data any
-	if command.Command == "/test-users" {
-		data = dm.Users
+	if command.Command == "/users" {
+		data = bot.Data.Users.Map
 	} else {
-		data = dm.GetDevicesInfo()
+		data = bot.Data.Devices.GetDevicesInfo()
 	}
 
 	// In case we are dealing with an OptionModalHandler save pointer to it
 	// so we can change its state when needed
 	optionHandler, ok := handler.(modals.OptionModalHandler)
 	if ok {
-		dm.CurrentOptionModalHandler = optionHandler
-		dm.CurrentOptionModalHandler.Reset()
+		bot.CurrentOptionModalHandler = optionHandler
+		bot.CurrentOptionModalHandler.Reset()
 	} else {
-		dm.CurrentOptionModalHandler = nil
+		bot.CurrentOptionModalHandler = nil
 	}
 
 	modalRequest := handler.GenerateModalRequest(data)
-	_, err := dm.SlackClient.OpenView(command.TriggerID, modalRequest)
+	_, err := bot.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
 	}
 	return nil
 }
 
-func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCallback) error {
-	log.Println(interaction)
+func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallback) error {
 	switch interaction.Type {
 	case slack.InteractionTypeViewSubmission:
 		// NOTE: we use title text to determine which modal was submitted
@@ -241,43 +209,46 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			for _, selected := range userSelection {
 				deviceNames = append(deviceNames, selected.Value)
 			}
-			cmdOutput := dm.RestartProxies(deviceNames, interaction.User.Name)
-			dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
+			cmdOutput := bot.Data.Devices.RestartProxies(deviceNames, interaction.User.Name)
+			bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
 		case modals.MRemoveUsersTitle:
 			userSelection := interaction.View.State.Values[modals.MRemoveUsersActionId][modals.MRemoveUsersOptionId].SelectedOptions
 
-			users := dm.Users
-			for name := range users {
+			for name := range bot.Data.Users.Map {
 				for _, a := range userSelection {
 					if a.Value == name {
 						log.Printf("Deleting %s", a.Value)
-						delete(dm.Users, a.Value)
+						delete(bot.Data.Users.Map, a.Value)
 					}
 				}
 			}
 
-			dm.Users.SynchronizeToFile()
+			bot.Data.Users.SynchronizeToFile()
 
 		case modals.MAddUserTitle:
 
 			userSelection := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
 
 			for _, new_user := range userSelection {
-				user_info, _ := dm.SlackClient.GetUserInfo(new_user)
+				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
 				user_name := user_info.Name
 				log.Printf("Adding %s", user_name)
-				dm.Users[user_name] = users.STANDARD // Assign only standart value for now
+				// TODO: get access rights and isReviewer from input
+				bot.Data.Users.Map[user_name] = &users.User{
+					Id:         user_info.ID,
+					Rights:     users.STANDARD, // Assign only standart value for now
+					IsReviewer: false,
+				}
 			}
 
-			dm.Users.SynchronizeToFile()
-
+			bot.Data.Users.SynchronizeToFile()
 		default:
 		}
 
 	case slack.InteractionTypeBlockActions:
 		switch interaction.View.Title.Text {
 		case modals.MDeviceTitle:
-			if dm.CurrentOptionModalHandler == nil {
+			if bot.CurrentOptionModalHandler == nil {
 				log.Fatalf(
 					`Did not have a valid pointer to OptionModal,
         				please make sure to close any open modals before restarting the bot`,
@@ -286,7 +257,7 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 
 			// Update option view if new option was chosen
 			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
-			dm.CurrentOptionModalHandler.ChangeAction(option)
+			bot.CurrentOptionModalHandler.ChangeAction(option)
 
 			// handle button actions
 			for _, action := range interaction.ActionCallback.BlockActions {
@@ -294,30 +265,30 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 				case modals.ReserveDeviceActionId, modals.ReserveWithAutoActionId:
 
 					autoRelease := action.ActionID == modals.ReserveWithAutoActionId
-					errStr := dm.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
+					errStr := bot.Data.Devices.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
 					if errStr != "" {
 						log.Println(errStr)
 						// If there device was already taken -> inform user by personal DM message from the bot
-						dm.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
+						bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
 					}
 				case modals.ReleaseDeviceActionId:
-					victimId, errStr := dm.Release(action.Value, interaction.User.Name)
+					victimId, errStr := bot.Data.Devices.Release(action.Value, interaction.User.Name)
 					if victimId != "" {
 						log.Println(errStr)
-						dm.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+						bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
 					}
 				default:
 				}
 			}
 
 			// update modal view to display changes
-			updatedView := dm.CurrentOptionModalHandler.GenerateModalRequest(dm.GetDevicesInfo())
-			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Devices.GetDevicesInfo())
+			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
 			}
 		case modals.MShowUsersTitle, modals.MRemoveUsersTitle, modals.MAddUserTitle:
-			if dm.CurrentOptionModalHandler == nil {
+			if bot.CurrentOptionModalHandler == nil {
 				log.Fatalf(
 					`Did not have a valid pointer to OptionModal,
 						please make sure to close any open modals before restarting the bot`,
@@ -327,12 +298,12 @@ func (dm *DeviceManager) handleInteractionEvent(interaction slack.InteractionCal
 			// Update option view if new option was chosen
 			option := interaction.View.State.Values[modals.MUsersActionId][modals.MUsersOptionId].SelectedOption.Value
 			log.Println(option)
-			ok := dm.CurrentOptionModalHandler.ChangeAction(option)
+			ok := bot.CurrentOptionModalHandler.ChangeAction(option)
 			log.Println(ok)
 
 			// update modal view to display changes
-			updatedView := dm.CurrentOptionModalHandler.GenerateModalRequest(dm.Users)
-			_, err := dm.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Users.Map)
+			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
 			}

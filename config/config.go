@@ -6,12 +6,14 @@ import (
 )
 
 type Config struct {
-	SlackAuthToken string
-	SlackChannelId string
-	SlackAppToken  string
+	SlackAuthToken   string
+	SlackTaChannelId string
+	SlackAppToken    string
 
-	DevicesFilename string
-	UsersFilename   string
+	DevicesFilename   string
+	UsersFilename     string
+	ReviewersFilename string
+
 	Debug           bool
 	TaEndpoint      string
 	WorkersEndpoint string
@@ -25,12 +27,20 @@ func ConfigFromEnv() *Config {
 	taEndpoint := os.Getenv("SL_TA_ENDPOINT")
 
 	return &Config{
-		SlackAuthToken: os.Getenv("SLACK_AUTH_TOKEN"),
-		SlackChannelId: os.Getenv("SLACK_CHANNEL_ID"),
-		SlackAppToken:  os.Getenv("SLACK_APP_TOKEN"),
+		SlackAuthToken:   os.Getenv("SLACK_AUTH_TOKEN"),
+		SlackTaChannelId: os.Getenv("SLACK_TA_CHANNEL_ID"),
+		SlackAppToken:    os.Getenv("SLACK_APP_TOKEN"),
 
 		DevicesFilename: os.Getenv("SL_DEVICES_FILE"),
 		UsersFilename:   os.Getenv("SL_USERS_FILE"),
+
+		// NOTE: this file is used to store current list of reviewers
+		// i.e. reviewers are selected one by one until everyone has taken his turn
+		// after which the list is reset to full reviewers list.
+		// I don't see a reason why you might want to have that filename configurable
+		// so hardcoded it will stay.
+		ReviewersFilename: ".reviewers.txt",
+
 		Debug:           os.Getenv("SL_DEBUG") == "1",
 		TaEndpoint:      taEndpoint,
 		WorkersEndpoint: fmt.Sprintf("%s/workers", taEndpoint),

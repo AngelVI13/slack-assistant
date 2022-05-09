@@ -3,17 +3,22 @@ package utils
 import (
 	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/slack/handlers"
-	"github.com/slack-go/slack/socketmode"
+	"github.com/AngelVI13/slack-assistant/users"
 )
 
-func SetupDeviceManager(config *config.Config, socketClient *socketmode.Client) *handlers.DeviceManager {
+// SetupDataHolder Loads all data sources from locations specified in config file
+func SetupDataHolder(config *config.Config) *handlers.DataHolder {
 	devicesInfo := GetDevices(config)
-
-	users := GetUsers(config.UsersFilename)
-	deviceManager := &handlers.DeviceManager{
-		DevicesMap:  devicesInfo,
-		Users:       users,
-		SlackClient: socketClient,
+	usersMap := GetUsers(config.UsersFilename)
+	usersInfo := &users.UsersInfo{
+		Map:      usersMap,
+		Filename: config.UsersFilename,
 	}
-	return deviceManager
+
+	dataHolder := &handlers.DataHolder{
+		Devices:   &devicesInfo,
+		Users:     usersInfo,
+		Reviewers: users.NewReviewers(config, &usersInfo.Map),
+	}
+	return dataHolder
 }
