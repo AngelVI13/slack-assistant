@@ -3,7 +3,7 @@ package modals
 import (
 	"fmt"
 
-	"github.com/AngelVI13/slack-assistant/utils/users"
+	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
 )
 
@@ -24,7 +24,7 @@ func (h *RemoveUsersHandler) GenerateBlocks(usersM any) []slack.Block {
 
 	var userBlocks []*slack.OptionBlockObject
 
-	usersMap := usersM.(users.UserMap)
+	usersMap := usersM.(users.UsersMap)
 	for user, rights := range usersMap {
 		sectionBlock := slack.NewOptionBlockObject(
 			user,

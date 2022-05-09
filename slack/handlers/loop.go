@@ -175,7 +175,7 @@ func (bot *SlackBot) handleDeviceCommand(
 
 	var data any
 	if command.Command == "/users" {
-		data = bot.Data.Users
+		data = bot.Data.Users.Map
 	} else {
 		data = bot.Data.Devices.GetDevicesInfo()
 	}
