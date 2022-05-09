@@ -36,7 +36,7 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 
 type DataHolder struct {
 	Devices   *device.DevicesMap
-	Users     users.UsersInfo
+	Users     *users.UsersInfo
 	Reviewers users.Reviewers
 }
 
@@ -86,7 +86,7 @@ func (bot *SlackBot) processSlashCommand(event socketmode.Event) {
 		log.Fatalf("Could not type cast the message to a SlashCommand: %v\n", command)
 	}
 
-	_, userAllowed := bot.Data.Users[command.UserName]
+	_, userAllowed := bot.Data.Users.Map[command.UserName]
 	if !userAllowed {
 		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
@@ -214,12 +214,11 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 		case modals.MRemoveUsersTitle:
 			userSelection := interaction.View.State.Values[modals.MRemoveUsersActionId][modals.MRemoveUsersOptionId].SelectedOptions
 
-			users := bot.Data.Users
-			for name := range users {
+			for name := range bot.Data.Users.Map {
 				for _, a := range userSelection {
 					if a.Value == name {
 						log.Printf("Deleting %s", a.Value)
-						delete(bot.Data.Users, a.Value)
+						delete(bot.Data.Users.Map, a.Value)
 					}
 				}
 			}
@@ -234,7 +233,12 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
 				user_name := user_info.Name
 				log.Printf("Adding %s", user_name)
-				bot.Data.Users[user_name] = users.STANDARD // Assign only standart value for now
+				// TODO: get access rights and isReviewer from input
+				bot.Data.Users.Map[user_name] = &users.User{
+					Id:         user_info.ID,
+					Rights:     users.STANDARD, // Assign only standart value for now
+					IsReviewer: false,
+				}
 			}
 
 			bot.Data.Users.SynchronizeToFile()

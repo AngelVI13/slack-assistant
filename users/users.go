@@ -9,16 +9,41 @@ import (
 	"time"
 
 	"github.com/AngelVI13/slack-assistant/config"
-	"github.com/AngelVI13/slack-assistant/device"
+)
+
+type AccessRight int
+
+// NOTE: Currently access rights are not used
+const (
+	STANDARD AccessRight = iota
+	ADMIN
 )
 
 type User struct {
 	Id         string
-	Rights     device.AccessRight
+	Rights     AccessRight
 	IsReviewer bool `json:"is_reviewer"`
 }
 
-type UsersInfo map[string]*User
+type UsersMap map[string]*User
+
+type UsersInfo struct {
+	Map      UsersMap
+	Filename string
+}
+
+func (u *UsersInfo) SynchronizeToFile() {
+	data, err := json.Marshal(u)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = os.WriteFile(u.Filename, data, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println("INFO: Wrote users list to file")
+}
 
 type Reviewer struct {
 	Name string
@@ -33,10 +58,10 @@ type Reviewers struct {
 	ChannelId string // where to post chosen reviewer messages
 }
 
-func NewReviewers(config *config.Config, usersInfo *UsersInfo) Reviewers {
+func NewReviewers(config *config.Config, usersMap *UsersMap) Reviewers {
 	filename := config.ReviewersFilename
 
-	allReviewers := GetReviewers(usersInfo)
+	allReviewers := GetReviewers(usersMap)
 	reviewers := Reviewers{All: allReviewers, Filename: filename, ChannelId: config.SlackTaChannelId}
 
 	_, err := os.Stat(filename)
@@ -62,7 +87,7 @@ func NewReviewers(config *config.Config, usersInfo *UsersInfo) Reviewers {
 	return reviewers
 }
 
-func GetReviewers(usersInfo *UsersInfo) (reviewers []*Reviewer) {
+func GetReviewers(usersInfo *UsersMap) (reviewers []*Reviewer) {
 	for name, props := range *usersInfo {
 		if !props.IsReviewer {
 			continue

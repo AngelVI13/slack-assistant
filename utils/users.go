@@ -8,7 +8,7 @@ import (
 	"github.com/AngelVI13/slack-assistant/users"
 )
 
-func GetUsers(path string) (users users.UsersInfo) {
+func GetUsers(path string) (users users.UsersMap) {
 	fileData, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Could not read users file (%s)", path)
