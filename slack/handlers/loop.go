@@ -302,7 +302,7 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			log.Println(ok)
 
 			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Users)
+			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Users.Map)
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)

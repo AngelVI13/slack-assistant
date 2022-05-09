@@ -33,7 +33,7 @@ type UsersInfo struct {
 }
 
 func (u *UsersInfo) SynchronizeToFile() {
-	data, err := json.Marshal(u)
+	data, err := json.Marshal(u.Map)
 	if err != nil {
 		log.Fatal(err)
 	}
