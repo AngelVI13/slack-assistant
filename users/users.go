@@ -27,16 +27,17 @@ type Reviewer struct {
 
 // TODO: Update this data when add/edit/remove users feature is done
 type Reviewers struct {
-	All      []*Reviewer
-	Current  []*Reviewer
-	Filename string
+	All       []*Reviewer
+	Current   []*Reviewer
+	Filename  string
+	ChannelId string // where to post chosen reviewer messages
 }
 
 func NewReviewers(config *config.Config, usersInfo *UsersInfo) Reviewers {
 	filename := config.ReviewersFilename
 
 	allReviewers := GetReviewers(usersInfo)
-	reviewers := Reviewers{All: allReviewers, Filename: filename}
+	reviewers := Reviewers{All: allReviewers, Filename: filename, ChannelId: config.SlackTaChannelId}
 
 	_, err := os.Stat(filename)
 	if errors.Is(err, os.ErrNotExist) {

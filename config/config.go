@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	SlackAuthToken string
-	SlackChannelId string
-	SlackAppToken  string
+	SlackAuthToken   string
+	SlackTaChannelId string
+	SlackAppToken    string
 
 	DevicesFilename   string
 	UsersFilename     string
@@ -27,9 +27,9 @@ func ConfigFromEnv() *Config {
 	taEndpoint := os.Getenv("SL_TA_ENDPOINT")
 
 	return &Config{
-		SlackAuthToken: os.Getenv("SLACK_AUTH_TOKEN"),
-		SlackChannelId: os.Getenv("SLACK_CHANNEL_ID"),
-		SlackAppToken:  os.Getenv("SLACK_APP_TOKEN"),
+		SlackAuthToken:   os.Getenv("SLACK_AUTH_TOKEN"),
+		SlackTaChannelId: os.Getenv("SLACK_TA_CHANNEL_ID"),
+		SlackAppToken:    os.Getenv("SLACK_APP_TOKEN"),
 
 		DevicesFilename: os.Getenv("SL_DEVICES_FILE"),
 		UsersFilename:   os.Getenv("SL_USERS_FILE"),

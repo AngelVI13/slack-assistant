@@ -24,16 +24,29 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 		return nil
 	}
 
-	users, ok := data.(*users.Reviewers)
+	reviewersInfo, ok := data.(*users.Reviewers)
 	if !ok {
 		log.Fatalf("Expected users data, but got something else: %+v", data)
 	}
-	reviewer := users.ChooseReviewer(command.UserName)
+
+	// If command is invoked from somewhere else than the required channel -> raise error
+	if reviewersInfo.ChannelId != command.ChannelID {
+		usedCommand := fmt.Sprintf("%s %s", command.Command, command.Text)
+		errorMsg := fmt.Sprintf("Review command `%s` must be used inside channel <#%s>!", usedCommand, reviewersInfo.ChannelId)
+
+		slackClient.PostEphemeral(
+			command.UserID,
+			command.UserID,
+			slack.MsgOptionText(errorMsg, false),
+		)
+		return nil
+	}
+
+	reviewer := reviewersInfo.ChooseReviewer(command.UserName)
 	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n_Submitted by_: <@%s>\n_URL_: %s", taskId, reviewer.Id, command.UserID, url)
 
-	// TODO: send a (non-ephemeral) message back to the channel where this message came from
-	// Maybe i need to restrict this to only channels the bot is invited to!!!
-	slackClient.PostEphemeral(command.UserID, command.UserID, slack.MsgOptionText(reviewMsg, false))
+	// NOTE: the bot must be present in the channel otherwise, no response will be visible
+	slackClient.PostMessage(reviewersInfo.ChannelId, slack.MsgOptionText(reviewMsg, false))
 	return nil
 }
 
