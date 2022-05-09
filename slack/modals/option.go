@@ -38,7 +38,30 @@ func (h *CustomOptionModalHandler) Reset() {
 
 func (h *CustomOptionModalHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(data)
-	return generateInfoModalRequest(h.modalInfo.Title, allBlocks)
+
+	var title string
+	submition_req := false
+
+	switch h.selectedAction {
+	case showUsersAction:
+		title = MShowUsersTitle
+	case addUsersAction:
+		title = MAddUserTitle
+		submition_req = true
+	case removeUsersAction:
+		title = MRemoveUsersTitle
+		submition_req = true
+	default:
+		title = h.modalInfo.Title
+	}
+
+	// Input blocks require submit button
+	if submition_req {
+		return generateModalRequest(title, allBlocks)
+	} else {
+		return generateInfoModalRequest(title, allBlocks)
+	}
+
 }
 
 func (h *CustomOptionModalHandler) GenerateBlocks(data any) []slack.Block {
