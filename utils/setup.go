@@ -14,11 +14,13 @@ func SetupDataHolder(config *config.Config) *handlers.DataHolder {
 		Map:      usersMap,
 		Filename: config.UsersFilename,
 	}
+	parkingLot := GetParkingLot(config)
 
 	dataHolder := &handlers.DataHolder{
-		Devices:   &devicesInfo,
-		Users:     usersInfo,
-		Reviewers: users.NewReviewers(config, &usersInfo.Map),
+		Devices:    &devicesInfo,
+		Users:      usersInfo,
+		Reviewers:  users.NewReviewers(config, &usersInfo.Map),
+		ParkingLot: &parkingLot,
 	}
 	return dataHolder
 }

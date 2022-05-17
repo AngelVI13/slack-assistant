@@ -125,13 +125,12 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) 
 }
 
 func (d *DevicesMap) Release(deviceName, user string) (victimId, err string) {
-	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
-
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
-		log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
+		log.Fatalf("Wrong device name %v, %+v", deviceName, d)
 	}
 
+	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
 	device.Reserved = false
 	d.SynchronizeToFile()
 

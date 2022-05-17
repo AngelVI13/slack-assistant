@@ -1,4 +1,4 @@
-package device
+package parking
 
 import (
 	"fmt"
@@ -6,30 +6,19 @@ import (
 	"github.com/AngelVI13/slack-assistant/props"
 )
 
-type WorkerProps struct {
-	SerialProxyHost    string `json:"serial_proxy_host"`
-	SerialProxyPort    int    `json:"serial_proxy_port"`
-	DeviceSerialNumber string `json:"device_serial_number"`
-}
-
-type DeviceProps struct {
-	Name string
+type ParkingSpace struct {
+	Number int
+	Floor  int
 	props.ReservedProps
-	WorkerProps
 }
 
-type DevicesInfo []*DeviceProps
+type ParkingSpaces map[int]*ParkingSpace
 
-func (p *DeviceProps) GetPropsText() string {
-	return fmt.Sprintf(
-		"Port: %d\tHost: %s\tS/N: %s",
-		p.SerialProxyPort,
-		p.SerialProxyHost,
-		p.DeviceSerialNumber,
-	)
+func (p *ParkingSpace) GetPropsText() string {
+	return fmt.Sprintf("(%d floor)", p.Floor)
 }
 
-func (p *DeviceProps) GetStatusEmoji() string {
+func (p *ParkingSpace) GetStatusEmoji() string {
 	emoji := ":large_green_circle:"
 	if p.Reserved {
 		emoji = ":large_orange_circle:"
@@ -39,7 +28,7 @@ func (p *DeviceProps) GetStatusEmoji() string {
 
 // GetStatusDescription Get device status description i.e. reserved, by who, when, etc.
 // Returns empty string if device is free
-func (p *DeviceProps) GetStatusDescription() string {
+func (p *ParkingSpace) GetStatusDescription() string {
 	status := ""
 	if p.Reserved {
 		timeStr := p.ReservedTime.Format("Mon 15:04")

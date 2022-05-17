@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/parking"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
 	"github.com/AngelVI13/slack-assistant/users"
@@ -28,16 +29,23 @@ var SlashCommandsForModals = map[string]modals.ModalHandler{
 		modals.DefaultUsersAction,
 		modals.UsersModalInfo,
 	),
+	"/test-park": modals.NewCustomOptionModalHandler(
+		modals.ParkingActionMap,
+		modals.DefaultParkingAction,
+		modals.ParkingModalInfo,
+	),
 }
 
 var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 	"/review": &slash.ReviewHandler{},
 }
 
+// TODO: move this somewhere else and not in loop file
 type DataHolder struct {
-	Devices   *device.DevicesMap
-	Users     *users.UsersInfo
-	Reviewers users.Reviewers
+	Devices    *device.DevicesMap
+	Users      *users.UsersInfo
+	Reviewers  users.Reviewers
+	ParkingLot *parking.ParkingLot
 }
 
 type SlackBot struct {
@@ -173,9 +181,12 @@ func (bot *SlackBot) handleDeviceCommand(
 	handler modals.ModalHandler,
 ) error {
 
+	// TODO: fix this
 	var data any
-	if command.Command == "/users" {
+	if command.Command == "/test-users" {
 		data = bot.Data.Users.Map
+	} else if command.Command == "/test-park" {
+		data = bot.Data.ParkingLot.GetSpacesInfo()
 	} else {
 		data = bot.Data.Devices.GetDevicesInfo()
 	}
@@ -303,6 +314,46 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 
 			// update modal view to display changes
 			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Users.Map)
+			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		case modals.MParkingTitle:
+			if bot.CurrentOptionModalHandler == nil {
+				log.Fatalf(
+					`Did not have a valid pointer to OptionModal,
+        				please make sure to close any open modals before restarting the bot`,
+				)
+			}
+
+			// Update option view if new option was chosen
+			option := interaction.View.State.Values[modals.MParkingActionId][modals.MParkingOptionId].SelectedOption.Value
+			bot.CurrentOptionModalHandler.ChangeAction(option)
+
+			// handle button actions
+			for _, action := range interaction.ActionCallback.BlockActions {
+				switch action.ActionID {
+				case modals.ReserveParkingActionId, modals.ReserveParkingWithAutoActionId:
+					autoRelease := action.ActionID == modals.ReserveParkingWithAutoActionId
+					errStr := bot.Data.ParkingLot.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
+					if errStr != "" {
+						log.Println(errStr)
+						// If there device was already taken -> inform user by personal DM message from the bot
+						bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
+					}
+				case modals.ReleaseParkingActionId:
+					victimId, errStr := bot.Data.ParkingLot.Release(action.Value, interaction.User.Name)
+					if victimId != "" {
+						log.Println(errStr)
+						bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+					}
+				default:
+				}
+			}
+
+			// update modal view to display changes
+			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.ParkingLot.GetSpacesInfo())
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
