@@ -106,7 +106,7 @@ func (r *Reviewers) ChooseReviewer(senderName string) *Reviewer {
 }
 
 func (r *Reviewers) synchronizeToFile() {
-	data, err := json.Marshal(r.Current)
+	data, err := json.MarshalIndent(r.Current, "", "\t")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -37,7 +37,7 @@ func NewDevicesMapFromJson(data []byte, config *config.Config) DevicesMap {
 }
 
 func (d *DevicesMap) SynchronizeToFile() {
-	data, err := json.Marshal(d)
+	data, err := json.MarshalIndent(d, "", "\t")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,7 +178,7 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 		"command":      "restart",
 		"device_names": strings.Join(deviceNames, ","),
 	}
-	requestBodyJson, err := json.Marshal(requestBody)
+	requestBodyJson, err := json.MarshalIndent(requestBody, "", "\t")
 
 	if err != nil {
 		log.Fatalf("error while marshalling request body [%v] - %v", requestBody, err)

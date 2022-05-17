@@ -28,7 +28,7 @@ type UsersInfo struct {
 }
 
 func (u *UsersInfo) SynchronizeToFile() {
-	data, err := json.Marshal(u.Map)
+	data, err := json.MarshalIndent(u.Map, "", "\t")
 	if err != nil {
 		log.Fatal(err)
 	}
