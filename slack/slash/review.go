@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
@@ -19,11 +20,12 @@ const ListReviewersCmd = "list"
 // processing each command, to make sure that DeviceManager is initialized by then
 type ReviewHandler struct{}
 
-func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socketmode.Client, data any) error {
-	reviewersInfo, ok := data.(*users.Reviewers)
+func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socketmode.Client, dataObj any) error {
+	dataHolder, ok := dataObj.(*data.DataHolder)
 	if !ok {
-		log.Fatalf("Expected users data, but got something else: %+v", data)
+		log.Fatalf("Expected users data, but got something else: %+v", dataObj)
 	}
+	reviewersInfo := &dataHolder.Reviewers
 
 	// If command is invoked from somewhere else than the required channel -> raise error
 	if reviewersInfo.ChannelId != command.ChannelID {
@@ -40,19 +42,22 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 
 	commandTxt := strings.TrimSpace(command.Text)
 
-	// If instead of TaskID we have a subcommand -> handle that
-	if commandTxt == ResetReviewersCmd {
-		resetReviewers(reviewersInfo, command, slackClient)
-		return nil
-	} else if commandTxt == ListReviewersCmd {
-		listReviewers(reviewersInfo, command, slackClient)
-		return nil
+	// If instead of TaskID we have a subcommand -> handle that (only for admins)
+	userInfo, ok := dataHolder.Users.Map[command.UserName]
+	if ok && userInfo.Rights == users.ADMIN {
+		if commandTxt == ResetReviewersCmd {
+			resetReviewers(reviewersInfo, command, slackClient)
+			return nil
+		} else if commandTxt == ListReviewersCmd {
+			listReviewers(reviewersInfo, command, slackClient)
+			return nil
+		}
 	}
 
 	// Otherwise, treat command text as TaskID and try to process that
 	url, errorMsg := getTaskLink(commandTxt)
 	if errorMsg != "" {
-		slackClient.PostEphemeral(command.UserID, command.UserID, slack.MsgOptionText(errorMsg, false))
+		slackClient.PostEphemeral(command.ChannelID, command.UserID, slack.MsgOptionText(errorMsg, false))
 		return nil
 	}
 
