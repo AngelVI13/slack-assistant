@@ -34,8 +34,6 @@ func NewReviewers(config *config.Config, usersMap *UsersMap) Reviewers {
 	if errors.Is(err, os.ErrNotExist) {
 		// Load reviewers from users list and create current reviewers list file
 		reviewers.ResetCurrentReviewers()
-		reviewers.synchronizeToFile()
-
 		log.Printf("INFO: Generated reviewers list from users info (%d reviewers).", len(reviewers.All))
 	} else if err == nil {
 		// Load current reviewers from file
@@ -77,6 +75,7 @@ func (r *Reviewers) ResetCurrentReviewers() {
 	}
 
 	r.Current = currentReviewers
+	r.synchronizeToFile()
 }
 
 // ChooseReviewer Picks a reviewer from the current list of reviewers (can't be equal to sender).
