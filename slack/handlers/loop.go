@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
 	"github.com/AngelVI13/slack-assistant/users"
@@ -34,14 +34,8 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 	"/review": &slash.ReviewHandler{},
 }
 
-type DataHolder struct {
-	Devices   *device.DevicesMap
-	Users     *users.UsersInfo
-	Reviewers users.Reviewers
-}
-
 type SlackBot struct {
-	Data *DataHolder
+	Data *data.DataHolder
 
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
@@ -159,7 +153,7 @@ func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
 		return bot.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
 		// TODO: Reviewers here is hardcoded -> need a better way to handle args for slash commands
-		return handler.Execute(&command, bot.SlackClient, &bot.Data.Reviewers)
+		return handler.Execute(&command, bot.SlackClient, bot.Data)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
 		log.Printf("WARNING: User (%s) requested unsupported command %s\n", command.UserName, command.Command)
