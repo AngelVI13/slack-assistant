@@ -88,8 +88,9 @@ func getTaskLink(taskId string) (url string, errorMsg string) {
 func resetReviewers(reviewersInfo *users.Reviewers, command *slack.SlashCommand, slackClient *socketmode.Client) {
 	reviewersInfo.ResetCurrentReviewers()
 	msg := fmt.Sprintf(
-		"Reviewer list reset successfully! There are %d available reviewers.\n\n_For a full list of reviewers use *'/review list'* command._",
+		"Reviewer list reset successfully! There are %d available reviewers.\n\n_For a full list of reviewers use *'/review %s'* command._",
 		len(reviewersInfo.Current),
+		ListReviewersCmd,
 	)
 	slackClient.PostEphemeral(command.ChannelID, command.UserID, slack.MsgOptionText(msg, false))
 }
