@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
@@ -221,21 +222,36 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 
 		case modals.MAddUserTitle:
 
-			userSelection := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
+			selectedUsers := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
+			selectedOptions := interaction.View.State.Values[modals.MAddUserAccessRightActionId][modals.MAddUserAccessRightOptionId].SelectedOptions
 
-			for _, new_user := range userSelection {
+			accessRights := users.STANDARD
+			isReviewer := false
+
+			for _, selection := range selectedOptions {
+				switch selection.Value {
+				case modals.MAddUserAccessRightOption:
+					accessRights = users.ADMIN
+				case modals.MAddUserReviewerOption:
+					isReviewer = true
+				}
+			}
+
+			for _, new_user := range selectedUsers {
 				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
 				user_name := user_info.Name
 				log.Printf("Adding %s", user_name)
-				// TODO: get access rights and isReviewer from input
+
 				bot.Data.Users.Map[user_name] = &users.User{
 					Id:         user_info.ID,
-					Rights:     users.STANDARD, // Assign only standart value for now
-					IsReviewer: false,
+					Rights:     accessRights,
+					IsReviewer: isReviewer,
 				}
 			}
 
 			bot.Data.Users.SynchronizeToFile()
+			users.NewReviewers(config.ConfigFromEnv(), &bot.Data.Users.Map)
+			log.Println()
 		default:
 		}
 
