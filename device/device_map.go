@@ -57,20 +57,35 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 	}
 }
 
-func (d *DevicesMap) GetDevicesInfo() DevicesInfo {
+// GetDevicesInfo Returns DevicesInfo in a particular order. First are devices
+// that have been reserved by provided user. Then are all the other devices
+// sorted by status (reserved or not) and then sub-sorted by name.
+func (d *DevicesMap) GetDevicesInfo(user string) DevicesInfo {
 	devices := make(DevicesInfo, 0, len(d.Devices))
 
 	for _, value := range d.Devices {
 		devices = append(devices, value)
 	}
 
+	// Group devices in 2 groups -> belonging to given user or not
+	// The group that doesn't belong to user will be sorted by name and by status (reserved or not)
+	userDevices := make(DevicesInfo, 0)
+	nonUserDevices := make(DevicesInfo, 0)
+	for _, d := range devices {
+		if d.Reserved && d.ReservedBy == user {
+			userDevices = append(userDevices, d)
+		} else {
+			nonUserDevices = append(nonUserDevices, d)
+		}
+	}
+
 	// NOTE: This sorts the device list starting from free devices
-	sort.Slice(devices, func(i, j int) bool {
-		return !devices[i].Reserved
+	sort.Slice(nonUserDevices, func(i, j int) bool {
+		return !nonUserDevices[i].Reserved
 	})
 
 	firstTaken := -1 // Index of first taken device
-	for i, device := range devices {
+	for i, device := range nonUserDevices {
 		if device.Reserved {
 			firstTaken = i
 			break
@@ -80,14 +95,14 @@ func (d *DevicesMap) GetDevicesInfo() DevicesInfo {
 	// NOTE: this might be unnecessary but it shows devices in predicable way in UI so its nice.
 	// If all devices are free or all devices are taken, sort by name
 	if firstTaken == -1 || firstTaken == 0 {
-		sort.Slice(devices, func(i, j int) bool {
-			return devices[i].Name < devices[j].Name
+		sort.Slice(nonUserDevices, func(i, j int) bool {
+			return nonUserDevices[i].Name < nonUserDevices[j].Name
 		})
 	} else {
 		// split devices into 2 - free & taken
 		// sort each sub slice based on device name/port
-		free := devices[:firstTaken]
-		taken := devices[firstTaken:]
+		free := nonUserDevices[:firstTaken]
+		taken := nonUserDevices[firstTaken:]
 
 		sort.Slice(free, func(i, j int) bool {
 			return free[i].Name < free[j].Name
@@ -98,7 +113,10 @@ func (d *DevicesMap) GetDevicesInfo() DevicesInfo {
 		})
 	}
 
-	return devices
+	allDevices := make(DevicesInfo, 0, len(devices))
+	allDevices = append(allDevices, userDevices...)
+	allDevices = append(allDevices, nonUserDevices...)
+	return allDevices
 }
 
 func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) (err string) {

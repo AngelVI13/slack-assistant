@@ -144,7 +144,7 @@ func (bot *SlackBot) ProcessMessageLoop(ctx context.Context) {
 // Crashes in case the slack client could not open model view
 func (bot *SlackBot) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
 	handler := &modals.UnauthorizedHandler{}
-	modalRequest := handler.GenerateModalRequest(command, bot.Data.Devices.GetDevicesInfo())
+	modalRequest := handler.GenerateModalRequest(command, bot.Data.Devices.GetDevicesInfo(command.UserName))
 
 	_, err := bot.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
@@ -176,7 +176,7 @@ func (bot *SlackBot) handleDeviceCommand(
 	if command.Command == "/users" {
 		data = bot.Data.Users.Map
 	} else {
-		data = bot.Data.Devices.GetDevicesInfo()
+		data = bot.Data.Devices.GetDevicesInfo(command.UserName)
 	}
 
 	// In case we are dealing with an OptionModalHandler save pointer to it
@@ -284,7 +284,12 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			}
 
 			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(bot.CurrentOptionModalData.Command, bot.Data.Devices.GetDevicesInfo())
+			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
+				bot.CurrentOptionModalData.Command,
+				bot.Data.Devices.GetDevicesInfo(
+					bot.CurrentOptionModalData.Command.UserName,
+				),
+			)
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
