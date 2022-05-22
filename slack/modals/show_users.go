@@ -14,8 +14,8 @@ const MShowUsersOptionId = "optionSelected"
 
 type ShowUsersHandler struct{}
 
-func (h *ShowUsersHandler) GenerateModalRequest(users any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(users)
+func (h *ShowUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(command, users)
 
 	return generateModalRequest(MShowUsersTitle, allBlocks)
 }
@@ -33,7 +33,7 @@ func generateSectionBlocks(users users.UsersMap) []*slack.SectionBlock {
 	return userBlocks
 }
 
-func (h *ShowUsersHandler) GenerateBlocks(usersM any) []slack.Block {
+func (h *ShowUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM any) []slack.Block {
 	var allBlocks []slack.Block
 
 	usersMap, ok := usersM.(users.UsersMap)

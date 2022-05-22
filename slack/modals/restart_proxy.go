@@ -14,12 +14,12 @@ const MRestartProxyCheckboxId = "proxyCheckbox"
 
 type RestartProxyHandler struct{}
 
-func (h *RestartProxyHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(data)
+func (h *RestartProxyHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(command, data)
 	return generateModalRequest(MRestartProxyTitle, allBlocks)
 }
 
-func (h *RestartProxyHandler) GenerateBlocks(data any) []slack.Block {
+func (h *RestartProxyHandler) GenerateBlocks(command *slack.SlashCommand, data any) []slack.Block {
 	devices, ok := data.(device.DevicesInfo)
 	if !ok {
 		log.Fatal("Expected DevicesInfo but got something else")
