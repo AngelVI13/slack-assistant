@@ -61,17 +61,11 @@ func (d *DevicesMap) synchronizeFromFile(data []byte) {
 // that have been reserved by provided user. Then are all the other devices
 // sorted by status (reserved or not) and then sub-sorted by name.
 func (d *DevicesMap) GetDevicesInfo(user string) DevicesInfo {
-	devices := make(DevicesInfo, 0, len(d.Devices))
-
-	for _, value := range d.Devices {
-		devices = append(devices, value)
-	}
-
 	// Group devices in 2 groups -> belonging to given user or not
 	// The group that doesn't belong to user will be sorted by name and by status (reserved or not)
 	userDevices := make(DevicesInfo, 0)
 	nonUserDevices := make(DevicesInfo, 0)
-	for _, d := range devices {
+	for _, d := range d.Devices {
 		if d.Reserved && d.ReservedBy == user {
 			userDevices = append(userDevices, d)
 		} else {
@@ -113,7 +107,7 @@ func (d *DevicesMap) GetDevicesInfo(user string) DevicesInfo {
 		})
 	}
 
-	allDevices := make(DevicesInfo, 0, len(devices))
+	allDevices := make(DevicesInfo, 0, len(d.Devices))
 	allDevices = append(allDevices, userDevices...)
 	allDevices = append(allDevices, nonUserDevices...)
 	return allDevices
