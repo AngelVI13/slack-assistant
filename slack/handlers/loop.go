@@ -34,13 +34,18 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 	"/review": &slash.ReviewHandler{},
 }
 
+type OptionModalData struct {
+	Handler modals.OptionModalHandler
+	Command *slack.SlashCommand
+}
+
 type SlackBot struct {
 	Data *data.DataHolder
 
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
 	// keep a pointer to it so we can change states
-	CurrentOptionModalHandler modals.OptionModalHandler
+	CurrentOptionModalData *OptionModalData
 }
 
 func (bot *SlackBot) processEventApi(event socketmode.Event) {
@@ -139,7 +144,7 @@ func (bot *SlackBot) ProcessMessageLoop(ctx context.Context) {
 // Crashes in case the slack client could not open model view
 func (bot *SlackBot) handleUnauthorizedUserCommand(command *slack.SlashCommand) {
 	handler := &modals.UnauthorizedHandler{}
-	modalRequest := handler.GenerateModalRequest(command, bot.Data.Devices.GetDevicesInfo())
+	modalRequest := handler.GenerateModalRequest(command, bot.Data.Devices.GetDevicesInfo(command.UserName))
 
 	_, err := bot.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
@@ -171,20 +176,23 @@ func (bot *SlackBot) handleDeviceCommand(
 	if command.Command == "/users" {
 		data = bot.Data.Users.Map
 	} else {
-		data = bot.Data.Devices.GetDevicesInfo()
+		data = bot.Data.Devices.GetDevicesInfo(command.UserName)
 	}
 
 	// In case we are dealing with an OptionModalHandler save pointer to it
 	// so we can change its state when needed
 	optionHandler, ok := handler.(modals.OptionModalHandler)
 	if ok {
-		bot.CurrentOptionModalHandler = optionHandler
-		bot.CurrentOptionModalHandler.Reset()
+		bot.CurrentOptionModalData = &OptionModalData{
+			Handler: optionHandler,
+			Command: command,
+		}
+		bot.CurrentOptionModalData.Handler.Reset()
 	} else {
-		bot.CurrentOptionModalHandler = nil
+		bot.CurrentOptionModalData = nil
 	}
 
-	modalRequest := handler.GenerateModalRequest(data)
+	modalRequest := handler.GenerateModalRequest(command, data)
 	_, err := bot.SlackClient.OpenView(command.TriggerID, modalRequest)
 	if err != nil {
 		return fmt.Errorf("Error opening view: %s", err)
@@ -242,7 +250,7 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 	case slack.InteractionTypeBlockActions:
 		switch interaction.View.Title.Text {
 		case modals.MDeviceTitle:
-			if bot.CurrentOptionModalHandler == nil {
+			if bot.CurrentOptionModalData == nil {
 				log.Fatalf(
 					`Did not have a valid pointer to OptionModal,
         				please make sure to close any open modals before restarting the bot`,
@@ -251,7 +259,7 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 
 			// Update option view if new option was chosen
 			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
-			bot.CurrentOptionModalHandler.ChangeAction(option)
+			bot.CurrentOptionModalData.Handler.ChangeAction(option)
 
 			// handle button actions
 			for _, action := range interaction.ActionCallback.BlockActions {
@@ -276,13 +284,18 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			}
 
 			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Devices.GetDevicesInfo())
+			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
+				bot.CurrentOptionModalData.Command,
+				bot.Data.Devices.GetDevicesInfo(
+					bot.CurrentOptionModalData.Command.UserName,
+				),
+			)
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
 			}
 		case modals.MShowUsersTitle, modals.MRemoveUsersTitle, modals.MAddUserTitle:
-			if bot.CurrentOptionModalHandler == nil {
+			if bot.CurrentOptionModalData == nil {
 				log.Fatalf(
 					`Did not have a valid pointer to OptionModal,
 						please make sure to close any open modals before restarting the bot`,
@@ -292,11 +305,11 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			// Update option view if new option was chosen
 			option := interaction.View.State.Values[modals.MUsersActionId][modals.MUsersOptionId].SelectedOption.Value
 			log.Println(option)
-			ok := bot.CurrentOptionModalHandler.ChangeAction(option)
+			ok := bot.CurrentOptionModalData.Handler.ChangeAction(option)
 			log.Println(ok)
 
 			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalHandler.GenerateModalRequest(bot.Data.Users.Map)
+			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(bot.CurrentOptionModalData.Command, bot.Data.Users.Map)
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)
