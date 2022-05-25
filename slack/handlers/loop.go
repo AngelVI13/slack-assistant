@@ -36,7 +36,8 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 }
 
 type SlackBot struct {
-	Data *data.DataHolder
+	Data   *data.DataHolder
+	Config *config.Config
 
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
@@ -225,33 +226,15 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			selectedUsers := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
 			selectedOptions := interaction.View.State.Values[modals.MAddUserAccessRightActionId][modals.MAddUserAccessRightOptionId].SelectedOptions
 
-			accessRights := users.STANDARD
-			isReviewer := false
-
-			for _, selection := range selectedOptions {
-				switch selection.Value {
-				case modals.MAddUserAccessRightOption:
-					accessRights = users.ADMIN
-				case modals.MAddUserReviewerOption:
-					isReviewer = true
-				}
-			}
-
+			selectedUsersInfo := []*slack.User{}
 			for _, new_user := range selectedUsers {
 				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
-				user_name := user_info.Name
-				log.Printf("Adding %s", user_name)
-
-				bot.Data.Users.Map[user_name] = &users.User{
-					Id:         user_info.ID,
-					Rights:     accessRights,
-					IsReviewer: isReviewer,
-				}
+				selectedUsersInfo = append(selectedUsersInfo, user_info)
 			}
 
-			bot.Data.Users.SynchronizeToFile()
-			users.NewReviewers(config.ConfigFromEnv(), &bot.Data.Users.Map)
-			log.Println()
+			bot.Data.Users.AddNewUsers(selectedUsersInfo, selectedOptions, modals.MAddUserAccessRightOption, modals.MAddUserReviewerOption)
+			users.NewReviewers(bot.Config, &bot.Data.Users.Map)
+
 		default:
 		}
 

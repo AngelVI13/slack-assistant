@@ -32,18 +32,18 @@ func (h *AddUserHandler) GenerateBlocks(usersM any) []slack.Block {
 
 	var sectionBlocks []*slack.OptionBlockObject
 
-	sectionBlock1 := slack.NewOptionBlockObject(
+	adminOptionSectionBlock := slack.NewOptionBlockObject(
 		MAddUserAccessRightOption,
 		slack.NewTextBlockObject("mrkdwn", "Admin", false, false),
 		slack.NewTextBlockObject("mrkdwn", "Select to assign Admin rights.", false, false),
 	)
-	sectionBlock2 := slack.NewOptionBlockObject(
+	reviewerOptionSectionBlock := slack.NewOptionBlockObject(
 		MAddUserReviewerOption,
 		slack.NewTextBlockObject("mrkdwn", "Reviewer", false, false),
 		slack.NewTextBlockObject("mrkdwn", "Select to assign Reviewer option.", false, false),
 	)
 
-	sectionBlocks = append(sectionBlocks, sectionBlock1, sectionBlock2)
+	sectionBlocks = append(sectionBlocks, adminOptionSectionBlock, reviewerOptionSectionBlock)
 
 	deviceCheckboxGroup := slack.NewCheckboxGroupsBlockElement(MAddUserAccessRightOptionId, sectionBlocks...)
 	actionBlock := slack.NewActionBlock(MAddUserAccessRightActionId, deviceCheckboxGroup)

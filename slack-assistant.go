@@ -35,6 +35,7 @@ func main() {
 	slackBot := handlers.SlackBot{
 		Data:        dataHolder,
 		SlackClient: socketClient,
+		Config:      config,
 	}
 
 	// Create a context that can be used to cancel goroutine
