@@ -229,21 +229,18 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 
 		case modals.MAddUserTitle:
 
-			userSelection := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
+			selectedUsers := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
+			selectedOptions := interaction.View.State.Values[modals.MAddUserAccessRightActionId][modals.MAddUserAccessRightOptionId].SelectedOptions
 
-			for _, new_user := range userSelection {
+			selectedUsersInfo := []*slack.User{}
+			for _, new_user := range selectedUsers {
 				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
-				user_name := user_info.Name
-				log.Printf("Adding %s", user_name)
-				// TODO: get access rights and isReviewer from input
-				bot.Data.Users.Map[user_name] = &users.User{
-					Id:         user_info.ID,
-					Rights:     users.STANDARD, // Assign only standart value for now
-					IsReviewer: false,
-				}
+				selectedUsersInfo = append(selectedUsersInfo, user_info)
 			}
 
-			bot.Data.Users.SynchronizeToFile()
+			bot.Data.Users.AddNewUsers(selectedUsersInfo, selectedOptions, modals.MAddUserAccessRightOption, modals.MAddUserReviewerOption)
+			bot.Data.Reviewers.All = users.GetReviewers(&bot.Data.Users.Map)
+
 		default:
 		}
 
