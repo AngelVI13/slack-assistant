@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
@@ -36,8 +35,7 @@ var SlashCommandsForHandlers = map[string]slash.SlashHandler{
 }
 
 type SlackBot struct {
-	Data   *data.DataHolder
-	Config *config.Config
+	Data *data.DataHolder
 
 	SlackClient *socketmode.Client
 	// Whenever we are dealing with a modal that contains a state switching option
@@ -233,7 +231,7 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			}
 
 			bot.Data.Users.AddNewUsers(selectedUsersInfo, selectedOptions, modals.MAddUserAccessRightOption, modals.MAddUserReviewerOption)
-			users.NewReviewers(bot.Config, &bot.Data.Users.Map)
+			bot.Data.Reviewers.All = users.GetReviewers(&bot.Data.Users.Map)
 
 		default:
 		}
