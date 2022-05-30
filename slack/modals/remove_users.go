@@ -13,13 +13,13 @@ const MRemoveUsersOptionId = "MRemoveUsersOptionId"
 
 type RemoveUsersHandler struct{}
 
-func (h *RemoveUsersHandler) GenerateModalRequest(users any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(users)
+func (h *RemoveUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(command, users)
 
 	return generateModalRequest(MRemoveUsersTitle, allBlocks)
 }
 
-func (h *RemoveUsersHandler) GenerateBlocks(usersM any) []slack.Block {
+func (h *RemoveUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM any) []slack.Block {
 	var allBlocks []slack.Block
 
 	var userBlocks []*slack.OptionBlockObject

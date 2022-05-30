@@ -18,12 +18,12 @@ const (
 
 type DeviceBookingHandler struct{}
 
-func (h *DeviceBookingHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(data)
+func (h *DeviceBookingHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(command, data)
 	return generateInfoModalRequest(MDeviceBookingTitle, allBlocks)
 }
 
-func (h *DeviceBookingHandler) GenerateBlocks(data any) []slack.Block {
+func (h *DeviceBookingHandler) GenerateBlocks(command *slack.SlashCommand, data any) []slack.Block {
 	devices, ok := data.(device.DevicesInfo)
 	if !ok {
 		log.Fatal("Expected DevicesInfo but got something else")

@@ -6,28 +6,26 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
 )
+
+const ResetReviewersCmd = "reset"
+const ListReviewersCmd = "list"
 
 // TODO: Add New methods for these structs that can take a pointer to DeviceManager and store
 // all the stuff that might be needed (slack client, users data etc.) This will have to be done while
 // processing each command, to make sure that DeviceManager is initialized by then
 type ReviewHandler struct{}
 
-func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socketmode.Client, data any) error {
-	taskId := strings.TrimSpace(command.Text)
-	url, errorMsg := getTaskLink(taskId)
-	if errorMsg != "" {
-		slackClient.PostEphemeral(command.UserID, command.UserID, slack.MsgOptionText(errorMsg, false))
-		return nil
-	}
-
-	reviewersInfo, ok := data.(*users.Reviewers)
+func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socketmode.Client, dataObj any) error {
+	dataHolder, ok := dataObj.(*data.DataHolder)
 	if !ok {
-		log.Fatalf("Expected users data, but got something else: %+v", data)
+		log.Fatalf("Expected users data, but got something else: %+v", dataObj)
 	}
+	reviewersInfo := &dataHolder.Reviewers
 
 	// If command is invoked from somewhere else than the required channel -> raise error
 	if reviewersInfo.ChannelId != command.ChannelID {
@@ -42,8 +40,29 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 		return nil
 	}
 
+	commandTxt := strings.TrimSpace(command.Text)
+
+	// If instead of TaskID we have a subcommand -> handle that (only for admins)
+	userInfo, ok := dataHolder.Users.Map[command.UserName]
+	if ok && userInfo.Rights == users.ADMIN {
+		if commandTxt == ResetReviewersCmd {
+			resetReviewers(reviewersInfo, command, slackClient)
+			return nil
+		} else if commandTxt == ListReviewersCmd {
+			listReviewers(reviewersInfo, command, slackClient)
+			return nil
+		}
+	}
+
+	// Otherwise, treat command text as TaskID and try to process that
+	url, errorMsg := getTaskLink(commandTxt)
+	if errorMsg != "" {
+		slackClient.PostEphemeral(command.ChannelID, command.UserID, slack.MsgOptionText(errorMsg, false))
+		return nil
+	}
+
 	reviewer := reviewersInfo.ChooseReviewer(command.UserName)
-	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n_Submitted by_: <@%s>\n_URL_: %s", taskId, reviewer.Id, command.UserID, url)
+	reviewMsg := fmt.Sprintf("Reviewer for %s is <@%s>\n\n_Submitted by_: <@%s>\n_URL_: %s", commandTxt, reviewer.Id, command.UserID, url)
 
 	// NOTE: the bot must be present in the channel otherwise, no response will be visible
 	slackClient.PostMessage(reviewersInfo.ChannelId, slack.MsgOptionText(reviewMsg, false))
@@ -64,4 +83,27 @@ func getTaskLink(taskId string) (url string, errorMsg string) {
 	}
 
 	return url, errorMsg
+}
+
+func resetReviewers(reviewersInfo *users.Reviewers, command *slack.SlashCommand, slackClient *socketmode.Client) {
+	reviewersInfo.ResetCurrentReviewers()
+	msg := fmt.Sprintf(
+		"Reviewer list reset successfully! There are %d available reviewers.\n\n_For a full list of reviewers use *'/review %s'* command._",
+		len(reviewersInfo.Current),
+		ListReviewersCmd,
+	)
+	slackClient.PostEphemeral(command.ChannelID, command.UserID, slack.MsgOptionText(msg, false))
+}
+
+func listReviewers(reviewersInfo *users.Reviewers, command *slack.SlashCommand, slackClient *socketmode.Client) {
+	reviewerNames := []string{}
+	for _, r := range reviewersInfo.Current {
+		reviewerNames = append(reviewerNames, r.Name)
+	}
+	msg := fmt.Sprintf(
+		"Available reviewers (%d):\n\n\t* %s",
+		len(reviewersInfo.Current),
+		strings.Join(reviewerNames, "\n\t* "),
+	)
+	slackClient.PostEphemeral(command.ChannelID, command.UserID, slack.MsgOptionText(msg, false))
 }

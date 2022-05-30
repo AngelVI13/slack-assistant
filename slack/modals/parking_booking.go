@@ -18,12 +18,12 @@ const (
 
 type ParkingBookingHandler struct{}
 
-func (h *ParkingBookingHandler) GenerateModalRequest(data any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(data)
+func (h *ParkingBookingHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
+	allBlocks := h.GenerateBlocks(command, data)
 	return generateInfoModalRequest(MParkingBookingTitle, allBlocks)
 }
 
-func (h *ParkingBookingHandler) GenerateBlocks(data any) []slack.Block {
+func (h *ParkingBookingHandler) GenerateBlocks(command *slack.SlashCommand, data any) []slack.Block {
 	spaces, ok := data.(parking.SpacesInfo)
 	if !ok {
 		log.Fatal("Expected SpacesInfo but got something else")

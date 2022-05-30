@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+
+	"github.com/slack-go/slack"
 )
 
 type AccessRight int
@@ -38,4 +40,32 @@ func (u *UsersInfo) SynchronizeToFile() {
 		log.Fatal(err)
 	}
 	log.Println("INFO: Wrote users list to file")
+}
+
+func (u *UsersInfo) AddNewUsers(selectedUsersInfo []*slack.User, selectedOptions []slack.OptionBlockObject, accsessRightSelection string, reviewerOptionSelection string) {
+	accessRights := STANDARD
+	isReviewer := false
+
+	for _, selection := range selectedOptions {
+		switch selection.Value {
+		case accsessRightSelection:
+			accessRights = ADMIN
+		case reviewerOptionSelection:
+			isReviewer = true
+		}
+	}
+
+	for _, user_info := range selectedUsersInfo {
+		user_name := user_info.Name
+		log.Printf("Adding %s", user_name)
+
+		u.Map[user_name] = &User{
+			Id:         user_info.ID,
+			Rights:     accessRights,
+			IsReviewer: isReviewer,
+		}
+	}
+
+	u.SynchronizeToFile()
+
 }
