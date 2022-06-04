@@ -32,11 +32,7 @@ func (p *ParkingSpace) GetStatusDescription() string {
 	status := ""
 	if p.Reserved {
 		timeStr := p.ReservedTime.Format("Mon 15:04")
-		autoStatus := ""
-		if p.AutoRelease {
-			autoStatus = "\t:eject: *Auto*"
-		}
-		status = fmt.Sprintf("_:bust_in_silhouette:*%s*\ton\t:clock1: *%s*%s_", p.ReservedBy, timeStr, autoStatus)
+		status = fmt.Sprintf("_:bust_in_silhouette:*%s*\ton\t:clock1: *%s*_", p.ReservedBy, timeStr)
 	}
 	return status
 }

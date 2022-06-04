@@ -12,7 +12,6 @@ const (
 	MParkingBookingTitle = "Parking Booking"
 
 	ReserveParkingActionId         = "reserve"
-	ReserveParkingWithAutoActionId = "withAuto"
 	ReleaseParkingActionId         = "release"
 )
 
@@ -66,15 +65,12 @@ func generateParkingButtons(space *parking.ParkingSpace) []slack.BlockElement {
 
 		actionButtonText := "Reserve!"
 		reserveWithAutoButton := slack.NewButtonBlockElement(
-			ReserveWithAutoActionId,
+			ReserveParkingActionId,
 			fmt.Sprint(space.Number),
 			slack.NewTextBlockObject("plain_text", fmt.Sprintf("%s :eject:", actionButtonText), true, false),
 		)
 		reserveWithAutoButton = reserveWithAutoButton.WithStyle(slack.StylePrimary)
 		buttons = append(buttons, reserveWithAutoButton)
-
-		reserveButton := slack.NewButtonBlockElement(ReserveParkingActionId, fmt.Sprint(space.Number), slack.NewTextBlockObject("plain_text", actionButtonText, true, false))
-		buttons = append(buttons, reserveButton)
 	}
 	return buttons
 }

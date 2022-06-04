@@ -54,21 +54,28 @@ func (d *ParkingLot) synchronizeFromFile(data []byte) {
 	}
 }
 
-func (d *ParkingLot) GetSpacesInfo() SpacesInfo {
-	spaces := make(SpacesInfo, 0, len(d.ParkingSpaces))
-
-	for _, value := range d.ParkingSpaces {
-		spaces = append(spaces, value)
+// TODO: This is identical to GetDevicesInfo -> refactor it out
+func (d *ParkingLot) GetSpacesInfo(user string) SpacesInfo {
+    // Group devices in 2 groups -> belonging to given user or not
+	// The group that doesn't belong to user will be sorted by name and by status (reserved or not)
+	userSpaces := make(SpacesInfo, 0)
+	nonUserSpaces := make(SpacesInfo, 0)
+	for _, d := range d.ParkingSpaces {
+		if d.Reserved && d.ReservedBy == user {
+			userSpaces = append(userSpaces, d)
+		} else {
+			nonUserSpaces = append(nonUserSpaces, d)
+		}
 	}
 
 	// NOTE: This sorts the device list starting from free devices
-	sort.Slice(spaces, func(i, j int) bool {
-		return !spaces[i].Reserved
+	sort.Slice(nonUserSpaces, func(i, j int) bool {
+		return !nonUserSpaces[i].Reserved
 	})
 
 	firstTaken := -1 // Index of first taken device
-	for i, space := range spaces {
-		if space.Reserved {
+	for i, device := range nonUserSpaces {
+		if device.Reserved {
 			firstTaken = i
 			break
 		}
@@ -77,14 +84,14 @@ func (d *ParkingLot) GetSpacesInfo() SpacesInfo {
 	// NOTE: this might be unnecessary but it shows devices in predicable way in UI so its nice.
 	// If all devices are free or all devices are taken, sort by name
 	if firstTaken == -1 || firstTaken == 0 {
-		sort.Slice(spaces, func(i, j int) bool {
-			return spaces[i].Number < spaces[j].Number
+		sort.Slice(nonUserSpaces, func(i, j int) bool {
+			return nonUserSpaces[i].Number < nonUserSpaces[j].Number
 		})
 	} else {
 		// split devices into 2 - free & taken
 		// sort each sub slice based on device name/port
-		free := spaces[:firstTaken]
-		taken := spaces[firstTaken:]
+		free := nonUserSpaces[:firstTaken]
+		taken := nonUserSpaces[firstTaken:]
 
 		sort.Slice(free, func(i, j int) bool {
 			return free[i].Number < free[j].Number
@@ -95,7 +102,10 @@ func (d *ParkingLot) GetSpacesInfo() SpacesInfo {
 		})
 	}
 
-	return spaces
+	allSpaces := make(SpacesInfo, 0, len(d.ParkingSpaces))
+	allSpaces = append(allSpaces, userSpaces...)
+	allSpaces = append(allSpaces, nonUserSpaces...)
+	return allSpaces
 }
 
 func (l *ParkingLot) Reserve(parkingSpace, user, userId string, autoRelease bool) (errMsg string) {
