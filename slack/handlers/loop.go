@@ -336,7 +336,7 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			for _, action := range interaction.ActionCallback.BlockActions {
 				switch action.ActionID {
 				case modals.ReserveParkingActionId:
-					autoRelease := true  // by default parking reservation is always with auto release
+					autoRelease := true // by default parking reservation is always with auto release
 					errStr := bot.Data.ParkingLot.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
 					if errStr != "" {
 						log.Println(errStr)
@@ -355,9 +355,9 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 
 			// update modal view to display changes
 			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
-                bot.CurrentOptionModalData.Command,
-                bot.Data.ParkingLot.GetSpacesInfo(bot.CurrentOptionModalData.Command.UserName),
-            )
+				bot.CurrentOptionModalData.Command,
+				bot.Data.ParkingLot.GetSpacesInfo(bot.CurrentOptionModalData.Command.UserName),
+			)
 			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 			if err != nil {
 				log.Fatal(err)

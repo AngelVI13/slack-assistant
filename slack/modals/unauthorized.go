@@ -2,8 +2,8 @@ package modals
 
 import (
 	"fmt"
-	"github.com/slack-go/slack"
 	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/slack-go/slack"
 )
 
 const MUnauthorizedTitle = "Unauthorized user"

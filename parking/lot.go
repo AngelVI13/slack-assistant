@@ -56,7 +56,7 @@ func (d *ParkingLot) synchronizeFromFile(data []byte) {
 
 // TODO: This is identical to GetDevicesInfo -> refactor it out
 func (d *ParkingLot) GetSpacesInfo(user string) SpacesInfo {
-    // Group devices in 2 groups -> belonging to given user or not
+	// Group devices in 2 groups -> belonging to given user or not
 	// The group that doesn't belong to user will be sorted by name and by status (reserved or not)
 	userSpaces := make(SpacesInfo, 0)
 	nonUserSpaces := make(SpacesInfo, 0)
