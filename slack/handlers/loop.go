@@ -332,11 +332,18 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			option := interaction.View.State.Values[modals.MParkingActionId][modals.MParkingOptionId].SelectedOption.Value
 			bot.CurrentOptionModalData.Handler.ChangeAction(option)
 
+			// Check if an admin has made the request
+			isSpecialUser := bot.Data.Users.IsSpecial(interaction.User.Name)
+
 			// handle button actions
 			for _, action := range interaction.ActionCallback.BlockActions {
 				switch action.ActionID {
 				case modals.ReserveParkingActionId:
 					autoRelease := true // by default parking reservation is always with auto release
+					if isSpecialUser {  // unless we have a special user (i.e. user with designated parking space)
+						autoRelease = false
+					}
+
 					errStr := bot.Data.ParkingLot.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
 					if errStr != "" {
 						log.Println(errStr)
@@ -344,10 +351,21 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 						bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
 					}
 				case modals.ReleaseParkingActionId:
-					victimId, errStr := bot.Data.ParkingLot.Release(action.Value, interaction.User.Name)
-					if victimId != "" {
-						log.Println(errStr)
-						bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+					if !isSpecialUser {
+						victimId, errStr := bot.Data.ParkingLot.Release(action.Value, interaction.User.Name)
+						if victimId != "" {
+							log.Println(errStr)
+							bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
+						}
+					} else {
+						updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
+							bot.CurrentOptionModalData.Command,
+							bot.Data.ParkingLot.GetSpacesInfo(""),
+						)
+						_, err := bot.SlackClient.PushView(interaction.TriggerID, updatedView)
+						if err != nil {
+							log.Fatal(err)
+						}
 					}
 				default:
 				}
