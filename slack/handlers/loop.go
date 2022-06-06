@@ -358,9 +358,12 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 							bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
 						}
 					} else {
-						updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
+						chosenParkingSpace := bot.Data.ParkingLot.GetSpace(action.Value)
+
+						parkingReleaseHandler := &modals.ParkingReleaseHandler{}
+						updatedView := parkingReleaseHandler.GenerateModalRequest(
 							bot.CurrentOptionModalData.Command,
-							bot.Data.ParkingLot.GetSpacesInfo(""),
+							chosenParkingSpace,
 						)
 						_, err := bot.SlackClient.PushView(interaction.TriggerID, updatedView)
 						if err != nil {

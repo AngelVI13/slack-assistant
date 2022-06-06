@@ -137,15 +137,7 @@ func (l *ParkingLot) Reserve(parkingSpace, user, userId string, autoRelease bool
 }
 
 func (l *ParkingLot) Release(parkingSpace, user string) (victimId, errMsg string) {
-	spaceNumber, err := strconv.Atoi(parkingSpace)
-	if err != nil {
-		log.Fatalf("Could not convert parkingSpace %+v to int", parkingSpace)
-	}
-
-	space, ok := l.ParkingSpaces[spaceNumber]
-	if !ok {
-		log.Fatalf("Incorrect parking space number %s, %+v", parkingSpace, l)
-	}
+	space := l.GetSpace(parkingSpace)
 
 	log.Printf("PARKING_RELEASE: User (%s) released (%s) device.", user, parkingSpace)
 
@@ -156,6 +148,19 @@ func (l *ParkingLot) Release(parkingSpace, user string) (victimId, errMsg string
 		return space.ReservedById, fmt.Sprintf(":warning: *%s* released your (*%s*) space (*%d*)", user, space.ReservedBy, space.Number)
 	}
 	return "", ""
+}
+
+func (l *ParkingLot) GetSpace(parkingSpace string) *ParkingSpace {
+	spaceNumber, err := strconv.Atoi(parkingSpace)
+	if err != nil {
+		log.Fatalf("Could not convert parkingSpace %+v to int", parkingSpace)
+	}
+
+	space, ok := l.ParkingSpaces[spaceNumber]
+	if !ok {
+		log.Fatalf("Incorrect parking space number %s, %+v", parkingSpace, l)
+	}
+	return space
 }
 
 func (l *ParkingLot) AutoRelease(when time.Time) {
