@@ -32,17 +32,24 @@ func (h *ParkingReleaseHandler) GenerateBlocks(command *slack.SlashCommand, data
 	if !ok {
 		log.Fatal("Expected ParkingSpace but got something else")
 	}
+	description := slack.NewSectionBlock(
+		slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("Temporarily release space: %d (%d floor)", space.Number, space.Floor), false, false),
+		nil,
+		nil,
+	)
+	startDate := slack.NewDatePickerBlockElement(ReleaseStartDateActionId)
+	startDate.Placeholder = slack.NewTextBlockObject("plain_text", "Select START date", false, false)
+	endDate := slack.NewDatePickerBlockElement(ReleaseEndDateActionId)
+	endDate.Placeholder = slack.NewTextBlockObject("plain_text", "Select END date", false, false)
+	calendarsSection := slack.NewActionBlock(
+		ReleaseBlockId,
+		startDate,
+		endDate,
+	)
+
 	allBlocks := []slack.Block{
-		slack.NewSectionBlock(
-			slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("Temporarily release space: %d (%d floor)", space.Number, space.Floor), false, false),
-			nil,
-			nil,
-		),
-		slack.NewActionBlock(
-			ReleaseBlockId,
-			slack.NewDatePickerBlockElement(ReleaseStartDateActionId),
-			slack.NewDatePickerBlockElement(ReleaseEndDateActionId),
-		),
+		description,
+		calendarsSection,
 	}
 	return allBlocks
 }
