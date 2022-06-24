@@ -383,6 +383,37 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 			if err != nil {
 				log.Fatal(err)
 			}
+		case modals.MParkingBookingTitle: // TODO: Why is this not the parking release title instead?
+			if bot.CurrentOptionModalData.Handler == nil {
+				log.Fatalf(
+					`Did not have a valid pointer to OptionModal,
+        				please make sure to close any open modals before restarting the bot`,
+				)
+			}
+
+			// handle button actions
+			for _, action := range interaction.ActionCallback.BlockActions {
+				switch action.ActionID {
+				case modals.ReleaseStartDateActionId:
+					// format is YYYY-MM-DD
+					log.Println("----------- Start Date ", action.SelectedDate)
+				case modals.ReleaseEndDateActionId:
+					log.Println("----------- End Date ", action.SelectedDate)
+				default:
+				}
+			}
+
+			/*
+				// update modal view to display changes
+				updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
+					bot.CurrentOptionModalData.Command,
+					bot.Data.ParkingLot.GetSpacesInfo(bot.CurrentOptionModalData.Command.UserName),
+				)
+				_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
+				if err != nil {
+					log.Fatal(err)
+				}
+			*/
 		default:
 		}
 	default:

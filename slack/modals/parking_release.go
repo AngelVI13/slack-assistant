@@ -37,10 +37,13 @@ func (h *ParkingReleaseHandler) GenerateBlocks(command *slack.SlashCommand, data
 		nil,
 		nil,
 	)
+
 	startDate := slack.NewDatePickerBlockElement(ReleaseStartDateActionId)
 	startDate.Placeholder = slack.NewTextBlockObject("plain_text", "Select START date", false, false)
+
 	endDate := slack.NewDatePickerBlockElement(ReleaseEndDateActionId)
 	endDate.Placeholder = slack.NewTextBlockObject("plain_text", "Select END date", false, false)
+
 	calendarsSection := slack.NewActionBlock(
 		ReleaseBlockId,
 		startDate,
