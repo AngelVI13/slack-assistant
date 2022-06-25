@@ -11,9 +11,6 @@ import (
 const (
 	MParkingReleaseTitle = "Temporary release a parking spot"
 
-	// TODO: Add 2 buttons for Release for Special users (on the booking page)
-	//       1. Button for temporary release of spot -> leads to this modal
-	//       2. Button for permament release (acts the same as release for non-special users)
 	TempReleaseParkingActionId = "tempRelease"
 	ReleaseStartDateActionId   = "releaseStartDate"
 	ReleaseEndDateActionId     = "releaseEndDate"

@@ -15,6 +15,8 @@ import (
 	"github.com/slack-go/slack/socketmode"
 )
 
+// TODO: Replace both maps with one universal map that contains command as key and as
+// property an object that has pointer to handler + extra info (i.e. is command global, is it for modal etc.)
 var SlashCommandsForModals = map[string]modals.ModalHandler{
 	"/devices": modals.NewCustomOptionModalHandler(
 		modals.DeviceActionMap,
@@ -90,7 +92,8 @@ func (bot *SlackBot) processSlashCommand(event socketmode.Event) {
 	}
 
 	_, userAllowed := bot.Data.Users.Map[command.UserName]
-	if !userAllowed {
+	// TODO: Check if command is part of globally allowed commands and only restrict access if its not
+	if command.Command != "/test-park" && !userAllowed {
 		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
 		bot.handleUnauthorizedUserCommand(&command)
@@ -161,7 +164,6 @@ func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
 	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
 		return bot.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
-		// TODO: Reviewers here is hardcoded -> need a better way to handle args for slash commands
 		return handler.Execute(&command, bot.SlackClient, bot.Data)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it

@@ -54,6 +54,9 @@ func generateParkingButtons(space *parking.ParkingSpace) []slack.BlockElement {
 	var buttons []slack.BlockElement
 
 	if space.Reserved {
+		// TODO: Add 2 buttons for Release for Special users (on the booking page)
+		//       1. Button for temporary release of spot -> leads to this modal
+		//       2. Button for permament release (acts the same as release for non-special users)
 		releaseButton := slack.NewButtonBlockElement(
 			ReleaseParkingActionId,
 			fmt.Sprint(space.Number),
