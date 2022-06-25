@@ -212,8 +212,8 @@ func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallbac
 	case slack.InteractionTypeViewSubmission:
 		bot.handleViewSubmission(&interaction)
 	case slack.InteractionTypeBlockActions:
+		bot.handleBlockActions(&interaction)
 	default:
-
 	}
 
 	return nil
