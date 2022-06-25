@@ -9,6 +9,6 @@ import (
 type DataHolder struct {
 	Devices    *device.DevicesMap
 	Users      *users.UsersInfo
-	Reviewers  users.Reviewers
+	Reviewers  *users.Reviewers
 	ParkingLot *parking.ParkingLot
 }

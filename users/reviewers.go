@@ -24,7 +24,7 @@ type Reviewers struct {
 	ChannelId string // where to post chosen reviewer messages
 }
 
-func NewReviewers(config *config.Config, usersMap *UsersMap) Reviewers {
+func NewReviewers(config *config.Config, usersMap *UsersMap) *Reviewers {
 	filename := config.ReviewersFilename
 
 	allReviewers := GetReviewers(usersMap)
@@ -48,7 +48,7 @@ func NewReviewers(config *config.Config, usersMap *UsersMap) Reviewers {
 		log.Fatalf("Initializing reviewers failed. Couldn't open current reviewers file: %+v", err)
 	}
 
-	return reviewers
+	return &reviewers
 }
 
 func GetReviewers(usersInfo *UsersMap) (reviewers []*Reviewer) {

@@ -25,7 +25,7 @@ func (h *ReviewHandler) Execute(command *slack.SlashCommand, slackClient *socket
 	if !ok {
 		log.Fatalf("Expected users data, but got something else: %+v", dataObj)
 	}
-	reviewersInfo := &dataHolder.Reviewers
+	reviewersInfo := dataHolder.Reviewers
 
 	// If command is invoked from somewhere else than the required channel -> raise error
 	if reviewersInfo.ChannelId != command.ChannelID {
