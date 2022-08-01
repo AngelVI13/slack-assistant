@@ -13,6 +13,7 @@ type Config struct {
 	DevicesFilename   string
 	UsersFilename     string
 	ReviewersFilename string
+	ParkingFilename   string
 
 	Debug           bool
 	TaEndpoint      string
@@ -40,6 +41,7 @@ func ConfigFromEnv() *Config {
 		// I don't see a reason why you might want to have that filename configurable
 		// so hardcoded it will stay.
 		ReviewersFilename: ".reviewers.txt",
+		ParkingFilename:   os.Getenv("SL_PARKING_FILE"),
 
 		Debug:           os.Getenv("SL_DEBUG") == "1",
 		TaEndpoint:      taEndpoint,

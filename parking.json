@@ -1,0 +1,76 @@
+{
+	"ParkingSpaces": {
+		"1": {
+			"Number": 1,
+			"Floor": -1,
+			"Reserved": false,
+			"AutoRelease": false,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U03FBL3R6KU",
+			"ReservedTime": "2022-05-30T08:05:39.650531944+03:00"
+		},
+		"2": {
+			"Number": 2,
+			"Floor": -1,
+			"Reserved": false,
+			"AutoRelease": false,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U03FBL3R6KU",
+			"ReservedTime": "2022-05-17T10:54:32.002360292+03:00"
+		},
+		"3": {
+			"Number": 3,
+			"Floor": -1,
+			"Reserved": false,
+			"AutoRelease": false,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U03FBL3R6KU",
+			"ReservedTime": "2022-05-17T10:46:57.152532487+03:00"
+		},
+		"4": {
+			"Number": 4,
+			"Floor": -1,
+			"Reserved": false,
+			"AutoRelease": true,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U9K74SZT7",
+			"ReservedTime": "2022-04-23T11:40:25.427828778+03:00"
+		},
+		"5": {
+			"Number": 5,
+			"Floor": -2,
+			"Reserved": false,
+			"AutoRelease": true,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U9K74SZT7",
+			"ReservedTime": "2022-04-23T11:40:25.427828778+03:00"
+		},
+		"6": {
+			"Number": 6,
+			"Floor": -2,
+			"Reserved": false,
+			"AutoRelease": true,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U9K74SZT7",
+			"ReservedTime": "2022-04-23T11:40:25.427828778+03:00"
+		},
+		"7": {
+			"Number": 7,
+			"Floor": -2,
+			"Reserved": false,
+			"AutoRelease": true,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U9K74SZT7",
+			"ReservedTime": "2022-04-23T11:40:25.427828778+03:00"
+		},
+		"8": {
+			"Number": 8,
+			"Floor": -2,
+			"Reserved": false,
+			"AutoRelease": false,
+			"ReservedBy": "angel.iliev",
+			"ReservedById": "U03FBL3R6KU",
+			"ReservedTime": "2022-05-17T10:56:44.103060343+03:00"
+		}
+	}
+}

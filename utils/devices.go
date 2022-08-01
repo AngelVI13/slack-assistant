@@ -11,6 +11,7 @@ import (
 
 	"github.com/AngelVI13/slack-assistant/config"
 	"github.com/AngelVI13/slack-assistant/device"
+	"github.com/AngelVI13/slack-assistant/props"
 )
 
 type Worker struct {
@@ -61,7 +62,7 @@ func GetDevices(config *config.Config) device.DevicesMap {
 		for _, worker := range info.Workers {
 			devicesList.Devices[device.DeviceName(worker.Name)] = &device.DeviceProps{
 				Name: worker.Name,
-				ReservedProps: device.ReservedProps{
+				ReservedProps: props.ReservedProps{
 					Reserved: false,
 				},
 				WorkerProps: worker.Properties,

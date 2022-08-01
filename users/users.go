@@ -30,7 +30,7 @@ type UsersInfo struct {
 }
 
 func (u *UsersInfo) SynchronizeToFile() {
-	data, err := json.Marshal(u.Map)
+	data, err := json.MarshalIndent(u.Map, "", "\t")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,17 +55,24 @@ func (u *UsersInfo) AddNewUsers(selectedUsersInfo []*slack.User, selectedOptions
 		}
 	}
 
-	for _, user_info := range selectedUsersInfo {
-		user_name := user_info.Name
-		log.Printf("Adding %s", user_name)
+	for _, userInfo := range selectedUsersInfo {
+		userName := userInfo.Name
+		log.Printf("Adding %s", userName)
 
-		u.Map[user_name] = &User{
-			Id:         user_info.ID,
+		u.Map[userName] = &User{
+			Id:         userInfo.ID,
 			Rights:     accessRights,
 			IsReviewer: isReviewer,
 		}
 	}
 
 	u.SynchronizeToFile()
+}
 
+func (u *UsersInfo) IsSpecial(userName string) bool {
+	user, ok := u.Map[userName]
+	if !ok {
+		return false
+	}
+	return user.Rights == ADMIN
 }

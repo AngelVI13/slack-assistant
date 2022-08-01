@@ -37,7 +37,7 @@ func NewDevicesMapFromJson(data []byte, config *config.Config) DevicesMap {
 }
 
 func (d *DevicesMap) SynchronizeToFile() {
-	data, err := json.Marshal(d)
+	data, err := json.MarshalIndent(d, "", "\t")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -137,13 +137,12 @@ func (d *DevicesMap) Reserve(deviceName, user, userId string, autoRelease bool) 
 }
 
 func (d *DevicesMap) Release(deviceName, user string) (victimId, err string) {
-	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
-
 	device, ok := d.Devices[DeviceName(deviceName)]
 	if !ok {
-		log.Fatalf("Wrong device deviceName %s, %+v", deviceName, d)
+		log.Fatalf("Wrong device name %v, %+v", deviceName, d)
 	}
 
+	log.Printf("RELEASE: User (%s) released (%s) device.", user, deviceName)
 	device.Reserved = false
 	d.SynchronizeToFile()
 
@@ -190,7 +189,7 @@ func (d *DevicesMap) RestartProxies(deviceNames []string, user string) string {
 		"command":      "restart",
 		"device_names": strings.Join(deviceNames, ","),
 	}
-	requestBodyJson, err := json.Marshal(requestBody)
+	requestBodyJson, err := json.MarshalIndent(requestBody, "", "\t")
 
 	if err != nil {
 		log.Fatalf("error while marshalling request body [%v] - %v", requestBody, err)

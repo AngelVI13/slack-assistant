@@ -2,7 +2,8 @@ package device
 
 import (
 	"fmt"
-	"time"
+
+	"github.com/AngelVI13/slack-assistant/props"
 )
 
 type WorkerProps struct {
@@ -11,17 +12,9 @@ type WorkerProps struct {
 	DeviceSerialNumber string `json:"device_serial_number"`
 }
 
-type ReservedProps struct {
-	Reserved     bool
-	AutoRelease  bool
-	ReservedBy   string
-	ReservedById string
-	ReservedTime time.Time
-}
-
 type DeviceProps struct {
 	Name string
-	ReservedProps
+	props.ReservedProps
 	WorkerProps
 }
 

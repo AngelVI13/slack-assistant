@@ -9,13 +9,14 @@ import (
 	"github.com/AngelVI13/slack-assistant/data"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/AngelVI13/slack-assistant/slack/slash"
-	"github.com/AngelVI13/slack-assistant/users"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
 )
 
+// TODO: Replace both maps with one universal map that contains command as key and as
+// property an object that has pointer to handler + extra info (i.e. is command global, is it for modal etc.)
 var SlashCommandsForModals = map[string]modals.ModalHandler{
 	"/devices": modals.NewCustomOptionModalHandler(
 		modals.DeviceActionMap,
@@ -27,6 +28,11 @@ var SlashCommandsForModals = map[string]modals.ModalHandler{
 		modals.UsersActionMap,
 		modals.DefaultUsersAction,
 		modals.UsersModalInfo,
+	),
+	"/parking": modals.NewCustomOptionModalHandler(
+		modals.ParkingActionMap,
+		modals.DefaultParkingAction,
+		modals.ParkingModalInfo,
 	),
 }
 
@@ -86,7 +92,8 @@ func (bot *SlackBot) processSlashCommand(event socketmode.Event) {
 	}
 
 	_, userAllowed := bot.Data.Users.Map[command.UserName]
-	if !userAllowed {
+	// TODO: Check if command is part of globally allowed commands and only restrict access if its not
+	if command.Command != "/test-park" && !userAllowed {
 		log.Printf("WARNING: Unauthorized user is sending command [%s] to the bot (%s)", command.Command, command.UserName)
 
 		bot.handleUnauthorizedUserCommand(&command)
@@ -157,7 +164,6 @@ func (bot *SlackBot) handleSlashCommand(command slack.SlashCommand) error {
 	if handler, hasValue := SlashCommandsForModals[command.Command]; hasValue {
 		return bot.handleDeviceCommand(&command, handler)
 	} else if handler, hasValue := SlashCommandsForHandlers[command.Command]; hasValue {
-		// TODO: Reviewers here is hardcoded -> need a better way to handle args for slash commands
 		return handler.Execute(&command, bot.SlackClient, bot.Data)
 	} else {
 		// NOTE: this can only happen if slack added new command but the bot was not updated to support it
@@ -172,9 +178,12 @@ func (bot *SlackBot) handleDeviceCommand(
 	handler modals.ModalHandler,
 ) error {
 
+	// TODO: fix this
 	var data any
-	if command.Command == "/users" {
+	if command.Command == "/test-users" {
 		data = bot.Data.Users.Map
+	} else if command.Command == "/test-park" {
+		data = bot.Data.ParkingLot.GetSpacesInfo(command.UserName)
 	} else {
 		data = bot.Data.Devices.GetDevicesInfo(command.UserName)
 	}
@@ -203,119 +212,55 @@ func (bot *SlackBot) handleDeviceCommand(
 func (bot *SlackBot) handleInteractionEvent(interaction slack.InteractionCallback) error {
 	switch interaction.Type {
 	case slack.InteractionTypeViewSubmission:
-		// NOTE: we use title text to determine which modal was submitted
-		switch interaction.View.Title.Text {
-		case modals.MRestartProxyTitle:
-			deviceNames := []string{}
-			userSelection := interaction.View.State.Values[modals.MRestartProxyActionId][modals.MRestartProxyCheckboxId].SelectedOptions
-			for _, selected := range userSelection {
-				deviceNames = append(deviceNames, selected.Value)
-			}
-			cmdOutput := bot.Data.Devices.RestartProxies(deviceNames, interaction.User.Name)
-			bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(cmdOutput, false))
-		case modals.MRemoveUsersTitle:
-			userSelection := interaction.View.State.Values[modals.MRemoveUsersActionId][modals.MRemoveUsersOptionId].SelectedOptions
-
-			for name := range bot.Data.Users.Map {
-				for _, a := range userSelection {
-					if a.Value == name {
-						log.Printf("Deleting %s", a.Value)
-						delete(bot.Data.Users.Map, a.Value)
-					}
-				}
-			}
-
-			bot.Data.Users.SynchronizeToFile()
-
-		case modals.MAddUserTitle:
-
-			selectedUsers := interaction.View.State.Values[modals.MAddUserActionId][modals.MAddUserOptionId].SelectedUsers
-			selectedOptions := interaction.View.State.Values[modals.MAddUserAccessRightActionId][modals.MAddUserAccessRightOptionId].SelectedOptions
-
-			selectedUsersInfo := []*slack.User{}
-			for _, new_user := range selectedUsers {
-				user_info, _ := bot.SlackClient.GetUserInfo(new_user)
-				selectedUsersInfo = append(selectedUsersInfo, user_info)
-			}
-
-			bot.Data.Users.AddNewUsers(selectedUsersInfo, selectedOptions, modals.MAddUserAccessRightOption, modals.MAddUserReviewerOption)
-			bot.Data.Reviewers.All = users.GetReviewers(&bot.Data.Users.Map)
-
-		default:
-		}
-
+		bot.handleViewSubmission(&interaction)
 	case slack.InteractionTypeBlockActions:
-		switch interaction.View.Title.Text {
-		case modals.MDeviceTitle:
-			if bot.CurrentOptionModalData == nil {
-				log.Fatalf(
-					`Did not have a valid pointer to OptionModal,
-        				please make sure to close any open modals before restarting the bot`,
-				)
-			}
-
-			// Update option view if new option was chosen
-			option := interaction.View.State.Values[modals.MDeviceActionId][modals.MDeviceOptionId].SelectedOption.Value
-			bot.CurrentOptionModalData.Handler.ChangeAction(option)
-
-			// handle button actions
-			for _, action := range interaction.ActionCallback.BlockActions {
-				switch action.ActionID {
-				case modals.ReserveDeviceActionId, modals.ReserveWithAutoActionId:
-
-					autoRelease := action.ActionID == modals.ReserveWithAutoActionId
-					errStr := bot.Data.Devices.Reserve(action.Value, interaction.User.Name, interaction.User.ID, autoRelease)
-					if errStr != "" {
-						log.Println(errStr)
-						// If there device was already taken -> inform user by personal DM message from the bot
-						bot.SlackClient.PostEphemeral(interaction.User.ID, interaction.User.ID, slack.MsgOptionText(errStr, false))
-					}
-				case modals.ReleaseDeviceActionId:
-					victimId, errStr := bot.Data.Devices.Release(action.Value, interaction.User.Name)
-					if victimId != "" {
-						log.Println(errStr)
-						bot.SlackClient.PostEphemeral(victimId, victimId, slack.MsgOptionText(errStr, false))
-					}
-				default:
-				}
-			}
-
-			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(
-				bot.CurrentOptionModalData.Command,
-				bot.Data.Devices.GetDevicesInfo(
-					bot.CurrentOptionModalData.Command.UserName,
-				),
-			)
-			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
-			if err != nil {
-				log.Fatal(err)
-			}
-		case modals.MShowUsersTitle, modals.MRemoveUsersTitle, modals.MAddUserTitle:
-			if bot.CurrentOptionModalData == nil {
-				log.Fatalf(
-					`Did not have a valid pointer to OptionModal,
-						please make sure to close any open modals before restarting the bot`,
-				)
-			}
-
-			// Update option view if new option was chosen
-			option := interaction.View.State.Values[modals.MUsersActionId][modals.MUsersOptionId].SelectedOption.Value
-			log.Println(option)
-			ok := bot.CurrentOptionModalData.Handler.ChangeAction(option)
-			log.Println(ok)
-
-			// update modal view to display changes
-			updatedView := bot.CurrentOptionModalData.Handler.GenerateModalRequest(bot.CurrentOptionModalData.Command, bot.Data.Users.Map)
-			_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
-			if err != nil {
-				log.Fatal(err)
-			}
-		default:
-		}
+		bot.handleBlockActions(&interaction)
 	default:
-
 	}
 
 	return nil
+}
+
+func (bot *SlackBot) handleViewSubmission(interaction *slack.InteractionCallback) {
+	// NOTE: we use title text to determine which modal was submitted
+	switch interaction.View.Title.Text {
+	case modals.MRestartProxyTitle:
+		restartProxySubmission(bot.SlackClient, interaction, bot.Data.Devices)
+	case modals.MRemoveUsersTitle:
+		removeUserSubmission(interaction, bot.Data.Users)
+	case modals.MAddUserTitle:
+		addUserSubmission(bot.SlackClient, interaction, bot.Data.Users, bot.Data.Reviewers)
+	default:
+	}
+}
+
+func (bot *SlackBot) handleBlockActions(interaction *slack.InteractionCallback) {
+	if bot.CurrentOptionModalData.Handler == nil {
+		log.Fatalf(
+			`Did not have a valid pointer to OptionModal,
+                    please make sure to close any open modals before restarting the bot`,
+		)
+	}
+
+	var updatedView *slack.ModalViewRequest
+
+	switch interaction.View.Title.Text {
+	case modals.MDeviceTitle:
+		updatedView = handleDeviceActions(bot, interaction)
+	case modals.MShowUsersTitle, modals.MRemoveUsersTitle, modals.MAddUserTitle:
+		updatedView = handleUserActions(bot, interaction)
+	case modals.MParkingTitle:
+		updatedView = handleParkingActions(bot, interaction)
+	case modals.MParkingBookingTitle: // TODO: Why is this not the parking release title instead?
+		updatedView = handleParkingBooking(bot, interaction)
+	default:
+	}
+
+	// Update view if a handler generated an update
+	if updatedView != nil {
+		_, err := bot.SlackClient.UpdateView(*updatedView, "", "", interaction.View.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
