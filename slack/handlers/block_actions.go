@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"time"
 
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/slack-go/slack"
@@ -106,6 +107,12 @@ func handleReleaseParking(bot *SlackBot, interaction *slack.InteractionCallback,
 		}
 	} else {
 		chosenParkingSpace := bot.Data.ParkingLot.GetSpace(parkingSpace)
+		// TODO: specialUser should only be allowed to release their own place ?
+		err := bot.Data.ParkingLot.ToBeReleased.Add(interaction.User.ID, chosenParkingSpace.Number)
+		if err != nil {
+			// TODO: this should just show an error in modal but not fail the program
+			log.Fatal(err)
+		}
 
 		parkingReleaseHandler := &modals.ParkingReleaseHandler{}
 		updatedView := parkingReleaseHandler.GenerateModalRequest(
@@ -113,7 +120,7 @@ func handleReleaseParking(bot *SlackBot, interaction *slack.InteractionCallback,
 			chosenParkingSpace,
 		)
 		log.Println("_____ Generating BOOKING view")
-		_, err := bot.SlackClient.PushView(interaction.TriggerID, updatedView)
+		_, err = bot.SlackClient.PushView(interaction.TriggerID, updatedView)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -124,12 +131,37 @@ func handleParkingBooking(bot *SlackBot, interaction *slack.InteractionCallback)
 	// handle button actions
 	for _, action := range interaction.ActionCallback.BlockActions {
 		switch action.ActionID {
-		case modals.ReleaseStartDateActionId:
+		case modals.ReleaseStartDateActionId, modals.ReleaseEndDateActionId:
 			// format is YYYY-MM-DD
-			log.Println("----------- Start Date ", action.SelectedDate)
-		case modals.ReleaseEndDateActionId:
-			log.Println("----------- End Date ", action.SelectedDate)
+			log.Println(action.SelectedDate)
+			date, err := time.Parse("2006-01-02", action.SelectedDate)
+			if err != nil {
+				// TODO: replace with proper handling
+				log.Fatal(err)
+			}
+			releaseInfo := bot.Data.ParkingLot.ToBeReleased.GetByUserId(interaction.User.ID)
+			if releaseInfo == nil {
+				log.Fatalln(bot.Data.ParkingLot.ToBeReleased)
+			}
+
+			if action.ActionID == modals.ReleaseStartDateActionId {
+				releaseInfo.StartDate = &date
+			} else {
+				releaseInfo.EndDate = &date
+			}
+
+			if releaseInfo.Complete() {
+				err := releaseInfo.Error()
+				if err != nil {
+					// TODO: show this in the modal
+					log.Fatal(err)
+				}
+
+				// TODO: release parking space (shuold happen when the modal is closed/submitted)
+				log.Printf("Releasing %s", releaseInfo)
+			}
 		default:
+			log.Println("---- GOT", action.ActionID)
 		}
 	}
 

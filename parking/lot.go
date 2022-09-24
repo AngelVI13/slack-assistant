@@ -14,14 +14,84 @@ import (
 
 type SpacesInfo []*ParkingSpace
 
+type ReleaseInfo struct {
+	UserId    string
+	Space     int
+	StartDate *time.Time
+	EndDate   *time.Time
+}
+
+func (i *ReleaseInfo) Complete() bool {
+	return i.UserId != "" && i.Space > 0 && i.StartDate != nil && i.EndDate != nil
+}
+
+func (i *ReleaseInfo) Error() error {
+	if !i.Complete() {
+		return fmt.Errorf("Release info for space (%d) not complete", i.Space)
+	}
+
+	today := time.Now()
+	todayDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
+
+	if i.StartDate.Before(todayDate) {
+		return fmt.Errorf("Start date is in the past: %v", i.StartDate)
+	}
+
+	if i.EndDate.Before(*i.StartDate) {
+		return fmt.Errorf("End date is before start date: S(%v) - E(%v)", i.StartDate, i.EndDate)
+	}
+
+	return nil
+}
+
+func (i ReleaseInfo) String() string {
+	return fmt.Sprintf("ReleaseInfo(space=%d, userId=%s, start=%v, end=%v)", i.Space, i.UserId, i.StartDate, i.EndDate)
+}
+
+type ReleaseQueue struct {
+	queue []*ReleaseInfo
+}
+
+func (q *ReleaseQueue) Get(space int) *ReleaseInfo {
+	for _, item := range q.queue {
+		if item.Space == space {
+			return item
+		}
+	}
+	return nil
+}
+
+func (q *ReleaseQueue) GetByUserId(userId string) *ReleaseInfo {
+	for _, item := range q.queue {
+		if item.UserId == userId {
+			return item
+		}
+	}
+	return nil
+}
+
+func (q *ReleaseQueue) Add(userId string, space int) error {
+	if q.Get(space) != nil {
+		return fmt.Errorf("Space already marked for release")
+	}
+
+	q.queue = append(q.queue, &ReleaseInfo{
+		UserId: userId,
+		Space:  space,
+	})
+	return nil
+}
+
 type ParkingLot struct {
 	ParkingSpaces
-	config *config.Config
+	config       *config.Config
+	ToBeReleased ReleaseQueue
 }
 
 func NewParkingLot() ParkingLot {
 	return ParkingLot{
 		ParkingSpaces: make(map[int]*ParkingSpace),
+		ToBeReleased:  ReleaseQueue{},
 	}
 }
 

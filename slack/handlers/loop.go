@@ -139,6 +139,9 @@ func (bot *SlackBot) ProcessMessageLoop(ctx context.Context) {
 				bot.processEventInteractive(event)
 			}
 		case <-ticker.C:
+			// TODO: if the bot is stopped before midnight then nothing will be released
+			//       Loop through all reservation and baased on their data & auto release
+			//       release devices
 			// Auto release devices at midnight
 			//                YYYY  M  D  H  M  S  NS timezone
 			when := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
