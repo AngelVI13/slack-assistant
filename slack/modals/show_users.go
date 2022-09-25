@@ -15,7 +15,7 @@ const MShowUsersOptionId = "optionSelected"
 type ShowUsersHandler struct{}
 
 func (h *ShowUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(command, users)
+	allBlocks := h.GenerateBlocks(command, users...)
 
 	return generateModalRequest(MShowUsersTitle, allBlocks)
 }

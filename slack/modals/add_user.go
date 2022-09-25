@@ -15,7 +15,7 @@ const MAddUserReviewerOption = "Reviewer option"
 type AddUserHandler struct{}
 
 func (h *AddUserHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(command, users)
+	allBlocks := h.GenerateBlocks(command, users...)
 
 	return generateModalRequest(MAddUserTitle, allBlocks)
 }

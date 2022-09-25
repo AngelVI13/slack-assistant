@@ -15,7 +15,7 @@ const MRemoveUsersOptionId = "MRemoveUsersOptionId"
 type RemoveUsersHandler struct{}
 
 func (h *RemoveUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(command, users)
+	allBlocks := h.GenerateBlocks(command, users...)
 
 	return generateModalRequest(MRemoveUsersTitle, allBlocks)
 }

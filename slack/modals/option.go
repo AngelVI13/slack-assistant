@@ -37,7 +37,6 @@ func (h *CustomOptionModalHandler) Reset() {
 }
 
 func (h *CustomOptionModalHandler) GenerateModalRequest(command *slack.SlashCommand, data ...any) slack.ModalViewRequest {
-	log.Println("Custom", data)
 	allBlocks := h.GenerateBlocks(command, data...)
 
 	var title string

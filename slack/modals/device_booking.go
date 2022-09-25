@@ -19,7 +19,7 @@ const (
 type DeviceBookingHandler struct{}
 
 func (h *DeviceBookingHandler) GenerateModalRequest(command *slack.SlashCommand, data ...any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(command, data)
+	allBlocks := h.GenerateBlocks(command, data...)
 	return generateInfoModalRequest(MDeviceBookingTitle, allBlocks)
 }
 
