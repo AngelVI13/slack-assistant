@@ -16,18 +16,18 @@ type SpacesInfo []*ParkingSpace
 
 type ReleaseInfo struct {
 	UserId    string
-	Space     int
+	Space     *ParkingSpace
 	StartDate *time.Time
 	EndDate   *time.Time
 }
 
 func (i *ReleaseInfo) Complete() bool {
-	return i.UserId != "" && i.Space > 0 && i.StartDate != nil && i.EndDate != nil
+	return i.UserId != "" && i.Space != nil && i.StartDate != nil && i.EndDate != nil
 }
 
 func (i *ReleaseInfo) Error() error {
 	if !i.Complete() {
-		return fmt.Errorf("Release info for space (%d) not complete", i.Space)
+		return fmt.Errorf("Release info for space (%d) not complete", i.Space.Number)
 	}
 
 	today := time.Now()
@@ -45,7 +45,7 @@ func (i *ReleaseInfo) Error() error {
 }
 
 func (i ReleaseInfo) String() string {
-	return fmt.Sprintf("ReleaseInfo(space=%d, userId=%s, start=%v, end=%v)", i.Space, i.UserId, i.StartDate, i.EndDate)
+	return fmt.Sprintf("ReleaseInfo(space=%d, userId=%s, start=%v, end=%v)", i.Space.Number, i.UserId, i.StartDate, i.EndDate)
 }
 
 type ReleaseQueue struct {
@@ -54,7 +54,7 @@ type ReleaseQueue struct {
 
 func (q *ReleaseQueue) Get(space int) *ReleaseInfo {
 	for _, item := range q.queue {
-		if item.Space == space {
+		if item.Space.Number == space {
 			return item
 		}
 	}
@@ -70,8 +70,8 @@ func (q *ReleaseQueue) GetByUserId(userId string) *ReleaseInfo {
 	return nil
 }
 
-func (q *ReleaseQueue) Add(userId string, space int) error {
-	if q.Get(space) != nil {
+func (q *ReleaseQueue) Add(userId string, space *ParkingSpace) error {
+	if q.Get(space.Number) != nil {
 		return fmt.Errorf("Space already marked for release")
 	}
 

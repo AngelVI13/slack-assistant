@@ -6,8 +6,8 @@ import (
 
 type (
 	ModalHandler interface {
-		GenerateModalRequest(*slack.SlashCommand, any) slack.ModalViewRequest
-		GenerateBlocks(*slack.SlashCommand, any) []slack.Block
+		GenerateModalRequest(*slack.SlashCommand, ...any) slack.ModalViewRequest
+		GenerateBlocks(*slack.SlashCommand, ...any) []slack.Block
 	}
 
 	OptionModalHandler interface {

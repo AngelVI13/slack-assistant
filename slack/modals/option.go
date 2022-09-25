@@ -36,8 +36,9 @@ func (h *CustomOptionModalHandler) Reset() {
 	h.selectedAction = h.defaultAction
 }
 
-func (h *CustomOptionModalHandler) GenerateModalRequest(command *slack.SlashCommand, data any) slack.ModalViewRequest {
-	allBlocks := h.GenerateBlocks(command, data)
+func (h *CustomOptionModalHandler) GenerateModalRequest(command *slack.SlashCommand, data ...any) slack.ModalViewRequest {
+	log.Println("Custom", data)
+	allBlocks := h.GenerateBlocks(command, data...)
 
 	var title string
 	submition_req := false
@@ -64,7 +65,7 @@ func (h *CustomOptionModalHandler) GenerateModalRequest(command *slack.SlashComm
 
 }
 
-func (h *CustomOptionModalHandler) GenerateBlocks(command *slack.SlashCommand, data any) []slack.Block {
+func (h *CustomOptionModalHandler) GenerateBlocks(command *slack.SlashCommand, data ...any) []slack.Block {
 	var allBlocks []slack.Block
 
 	// Options
@@ -96,7 +97,7 @@ func (h *CustomOptionModalHandler) GenerateBlocks(command *slack.SlashCommand, d
 	if !ok {
 		log.Fatalf("No such action exists %s", h.selectedAction)
 	}
-	blocks := action.handler.GenerateBlocks(command, data)
+	blocks := action.handler.GenerateBlocks(command, data...)
 	allBlocks = append(allBlocks, blocks...)
 
 	return allBlocks

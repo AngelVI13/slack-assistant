@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/AngelVI13/slack-assistant/parking"
 	"github.com/AngelVI13/slack-assistant/slack/modals"
 	"github.com/slack-go/slack"
 )
@@ -108,7 +109,7 @@ func handleReleaseParking(bot *SlackBot, interaction *slack.InteractionCallback,
 	} else {
 		chosenParkingSpace := bot.Data.ParkingLot.GetSpace(parkingSpace)
 		// TODO: specialUser should only be allowed to release their own place ?
-		err := bot.Data.ParkingLot.ToBeReleased.Add(interaction.User.ID, chosenParkingSpace.Number)
+		err := bot.Data.ParkingLot.ToBeReleased.Add(interaction.User.ID, chosenParkingSpace)
 		if err != nil {
 			// TODO: this should just show an error in modal but not fail the program
 			log.Fatal(err)
@@ -128,18 +129,17 @@ func handleReleaseParking(bot *SlackBot, interaction *slack.InteractionCallback,
 }
 
 func handleParkingBooking(bot *SlackBot, interaction *slack.InteractionCallback) *slack.ModalViewRequest {
+	var releaseInfo *parking.ReleaseInfo
 	// handle button actions
 	for _, action := range interaction.ActionCallback.BlockActions {
 		switch action.ActionID {
 		case modals.ReleaseStartDateActionId, modals.ReleaseEndDateActionId:
-			// format is YYYY-MM-DD
-			log.Println(action.SelectedDate)
 			date, err := time.Parse("2006-01-02", action.SelectedDate)
 			if err != nil {
 				// TODO: replace with proper handling
 				log.Fatal(err)
 			}
-			releaseInfo := bot.Data.ParkingLot.ToBeReleased.GetByUserId(interaction.User.ID)
+			releaseInfo = bot.Data.ParkingLot.ToBeReleased.GetByUserId(interaction.User.ID)
 			if releaseInfo == nil {
 				log.Fatalln(bot.Data.ParkingLot.ToBeReleased)
 			}
@@ -150,31 +150,21 @@ func handleParkingBooking(bot *SlackBot, interaction *slack.InteractionCallback)
 				releaseInfo.EndDate = &date
 			}
 
-			if releaseInfo.Complete() {
-				err := releaseInfo.Error()
-				if err != nil {
-					// TODO: show this in the modal
-					log.Fatal(err)
-				}
-
-				// TODO: release parking space (shuold happen when the modal is closed/submitted)
-				log.Printf("Releasing %s", releaseInfo)
-			}
 		default:
-			log.Println("---- GOT", action.ActionID)
 		}
 	}
 
-	/*
+	if releaseInfo != nil {
 		parkingReleaseHandler := &modals.ParkingReleaseHandler{}
 		updatedView := parkingReleaseHandler.GenerateModalRequest(
 			bot.CurrentOptionModalData.Command,
-			chosenParkingSpace,
+			releaseInfo.Space,
+			releaseInfo.Error().Error(),
 		)
 		_, err := bot.SlackClient.UpdateView(updatedView, "", "", interaction.View.ID)
 		if err != nil {
 			log.Fatal(err)
 		}
-	*/
+	}
 	return nil
 }

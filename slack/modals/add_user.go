@@ -14,13 +14,13 @@ const MAddUserReviewerOption = "Reviewer option"
 
 type AddUserHandler struct{}
 
-func (h *AddUserHandler) GenerateModalRequest(command *slack.SlashCommand, users any) slack.ModalViewRequest {
+func (h *AddUserHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(command, users)
 
 	return generateModalRequest(MAddUserTitle, allBlocks)
 }
 
-func (h *AddUserHandler) GenerateBlocks(command *slack.SlashCommand, usersM any) []slack.Block {
+func (h *AddUserHandler) GenerateBlocks(command *slack.SlashCommand, usersM ...any) []slack.Block {
 
 	var allBlocks []slack.Block
 

@@ -14,7 +14,7 @@ const MShowUsersOptionId = "optionSelected"
 
 type ShowUsersHandler struct{}
 
-func (h *ShowUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users any) slack.ModalViewRequest {
+func (h *ShowUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(command, users)
 
 	return generateModalRequest(MShowUsersTitle, allBlocks)
@@ -33,10 +33,15 @@ func generateSectionBlocks(users users.UsersMap) []*slack.SectionBlock {
 	return userBlocks
 }
 
-func (h *ShowUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM any) []slack.Block {
+func (h *ShowUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM ...any) []slack.Block {
 	var allBlocks []slack.Block
 
-	usersMap, ok := usersM.(users.UsersMap)
+	if len(usersM) != 1 {
+		log.Fatal("Incorrect num of params for ShowUsersHandler: 1")
+	}
+	rawUsers := usersM[0]
+
+	usersMap, ok := rawUsers.(users.UsersMap)
 	if !ok {
 		log.Fatalf("Expected DevicesInfo but got %v", usersM)
 	}

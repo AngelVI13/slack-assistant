@@ -2,6 +2,7 @@ package modals
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/AngelVI13/slack-assistant/users"
 	"github.com/slack-go/slack"
@@ -13,18 +14,23 @@ const MRemoveUsersOptionId = "MRemoveUsersOptionId"
 
 type RemoveUsersHandler struct{}
 
-func (h *RemoveUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users any) slack.ModalViewRequest {
+func (h *RemoveUsersHandler) GenerateModalRequest(command *slack.SlashCommand, users ...any) slack.ModalViewRequest {
 	allBlocks := h.GenerateBlocks(command, users)
 
 	return generateModalRequest(MRemoveUsersTitle, allBlocks)
 }
 
-func (h *RemoveUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM any) []slack.Block {
+func (h *RemoveUsersHandler) GenerateBlocks(command *slack.SlashCommand, usersM ...any) []slack.Block {
 	var allBlocks []slack.Block
 
 	var userBlocks []*slack.OptionBlockObject
 
-	usersMap := usersM.(users.UsersMap)
+	if len(usersM) != 1 {
+		log.Fatal("Incorrect num of params for RemoveUsersHandler: 1")
+	}
+	rawUsers := usersM[0]
+
+	usersMap := rawUsers.(users.UsersMap)
 	for user, rights := range usersMap {
 		sectionBlock := slack.NewOptionBlockObject(
 			user,
